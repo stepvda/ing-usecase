@@ -91,6 +91,15 @@ def test_fixture_is_deterministic(fd):
     pd.testing.assert_frame_equal(a, b)
 
 
+def test_fixture_readability_formula_matches_language(fd):
+    # sieg 14/09: was hardcoded to the Dutch formula regardless of `language`;
+    # a fixture built with language="fr" or "en" silently claimed Dutch scoring.
+    expected = {"nl": "flesch_douma_nl", "fr": "kandel_moles_fr", "en": "flesch_reading_ease_en"}
+    for lang, formula in expected.items():
+        df = build_fixture(fd, language=lang, pages_per_bank=1)
+        assert set(df["readability_formula"]) == {formula}, lang
+
+
 # --- the validator actually catches things -----------------------------------
 def test_missing_required_column_is_an_error(df, fd):
     report = validate(df.drop(columns=["word_count"]), fd, tier="core")

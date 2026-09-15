@@ -91,6 +91,15 @@ def test_nearest_neighbours_excludes_self(df, fd):
     assert len(neighbours) == 3
 
 
+def test_nearest_neighbours_accepts_tier(df, fd):
+    # sieg 14/09: nearest_neighbours used to be the only sibling function
+    # without a tier passthrough - this is a regression guard, not a claim
+    # about which neighbours a restricted tier should return.
+    neighbours = nearest_neighbours(df, fd, focus="ing", k=3, tier="core")
+    assert "ing" not in neighbours.index
+    assert len(neighbours) == 3
+
+
 def test_deviations_are_sorted_by_absolute_gap(df, fd):
     gaps = ing_vs_peers(df, fd)["gap_sd"].abs().tolist()
     assert gaps == sorted(gaps, reverse=True)
@@ -106,6 +115,17 @@ def test_deck_claims_all_return_a_verdict(df, fd):
     claims = check_deck_claims(df, fd)
     assert len(claims) == 5
     assert claims["verdict"].isin({"supported", "not supported", "not testable"}).all()
+
+
+def test_deck_claims_lowest_traditional_does_not_crash_on_empty_subset(df, fd):
+    # sieg 14/09: H2 (KBC) used to call .idxmin() on a subset that could be
+    # empty (e.g. no bank tagged "traditional" left in the data), which raises
+    # instead of reporting "not testable" like every other untestable claim.
+    no_traditional = df.copy()
+    no_traditional["bank_category"] = "challenger"
+    claims = check_deck_claims(no_traditional, fd)
+    h2 = claims.loc[claims["id"] == "H2"].iloc[0]
+    assert h2["verdict"] == "not testable"
 
 
 def test_every_profile_has_the_same_fields(df, fd):

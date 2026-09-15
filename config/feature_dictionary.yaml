@@ -97,6 +97,9 @@ dimensions:
   marketing_principles:
     label: Marketing principles
     prd_ref: Plan section 4.3 - AIDA, Cialdini, feature-advantage-benefit
+  banking_domain:
+    label: Banking-domain signals (Siegried's addendum)
+    prd_ref: PRD section 11 bis / Plan section 4.3 bis - retail-banking angles a generic marketing framework misses
 
 # =============================================================================
 # FEATURES
@@ -339,6 +342,101 @@ features:
     tier: core
     required: true
     nullable: true
+
+  - name: word_count_band
+    dimension: tone_messaging
+    definition: word_count bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [very_short, short, medium, long]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: >
+      sieg 14/09 - same idea as readability_band, but fixed universal cutoffs rather than a
+      language-normalising formula (word_count has no such formula). REDUCES the cross-language
+      comparability problem, does not eliminate it - French runs ~15-20% longer than English for
+      the same content. See src/comparator/bands.py for the thresholds.
+
+  - name: sentence_count_band
+    dimension: tone_messaging
+    definition: sentence_count bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [very_short, short, medium, long]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - same caveat as word_count_band.
+
+  - name: avg_sentence_length_band
+    dimension: tone_messaging
+    definition: avg_sentence_length bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [short_sentences, medium_sentences, long_sentences]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: sieg 14/09 - same caveat as word_count_band.
+
+  - name: second_person_ratio_band
+    dimension: tone_messaging
+    definition: second_person_ratio bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [rarely_direct, sometimes_direct, mostly_direct]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: sieg 14/09 - a ratio travels a little better across languages than a raw count, banded anyway for consistency with the rest of this set.
+
+  - name: first_person_plural_band
+    dimension: tone_messaging
+    definition: first_person_plural_count bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [rare, occasional, frequent]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - same caveat as word_count_band.
+
+  - name: disclaimer_word_share_band
+    dimension: topics_value_prop
+    definition: disclaimer_word_share bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [minimal, moderate, heavy]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - same caveat as word_count_band.
+
+  - name: text_to_image_ratio_band
+    dimension: layout_structure
+    definition: text_to_image_ratio bucketed into fixed-threshold bands, so it can be compared across languages.
+    type: categorical
+    values: [image_heavy, balanced, text_heavy]
+    extraction: derived
+    source: derived
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: sieg 14/09 - same caveat as word_count_band; also inherits the text_to_image_ratio approximation noted in collection/scraper.py for static_fetch rows.
 
   - name: second_person_ratio
     dimension: tone_messaging
@@ -938,3 +1036,226 @@ features:
     tier: core
     required: true
     nullable: true
+
+  # --- Banking-domain signals (Siegried's addendum, sieg 14/09) --------------
+  # Not part of the original PRD section 11 dimensions - these come from retail-banking experience, added on top, nothing above removed.
+  # Full rationale for each is in docs/ing_requirements.docx section 11 bis
+  # and docs/ing_approach_and_project_plan.docx section 4.3 bis.
+
+  - name: audience_segment
+    dimension: banking_domain
+    definition: Whether the page addresses an individual, a professional/self-employed activity, or both.
+    type: categorical
+    values: [retail, professional, mixed]
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: sieg 14/09 - retail vs pro is a different axis than traditional vs challenger; most banks run both but frame differently.
+
+  - name: is_bundled_offer
+    dimension: banking_domain
+    definition: Whether the page pushes a bundle (account + card + insurance + investment) in the same funnel, rather than one isolated product.
+    type: boolean
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - the bancassurance model (bundled) vs single-product neobank is a business-model signal, not a tone or design choice.
+
+  - name: rate_framing
+    dimension: banking_domain
+    definition: Whether the headline rate is the regulated base rate, a promotional bonus, a capped/tiered rate presented as the full rate, or no rate is shown.
+    type: categorical
+    values: [base_rate, promo_bonus, capped_tiered, not_shown]
+    extraction: rubric
+    source: html_text
+    comparability: within_capture_window
+    tier: core
+    required: true
+    nullable: true
+    notes: >
+      sieg 14/09 - complements rate_shown/rate_value_pct/rate_prominence (which measure IF and WHERE a
+      rate appears) with WHAT KIND of rate it is. Belgian savings accounts are legally a base rate
+      (>=0.50%) plus a fidelity/growth premium; a "capped_tiered" rate ("up to X%") applying only to a
+      low ceiling or a short window is a known framing tactic.
+
+  - name: primary_cta_type
+    dimension: banking_domain
+    definition: Whether the primary call to action is self-service online, booking an advisor/branch visit, or something else.
+    type: categorical
+    values: [self_service_online, book_advisor_or_branch, other]
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: sieg 14/09 - a distribution-model signal; a neobank structurally cannot offer book_advisor_or_branch.
+
+  - name: switching_framing
+    dimension: banking_domain
+    definition: Whether the message reassures against switching away (retention) or actively encourages switching in (acquisition), if applicable at all.
+    type: categorical
+    values: [retention_reassurance, acquisition_encouragement, not_applicable]
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - Belgium's bank-switching service makes this a concrete, mesurable framing choice, not a vague "tone".
+
+  - name: regulatory_disclosure_prominence
+    dimension: banking_domain
+    definition: How visible mandated disclosures (APR/TAEG, deposit guarantee, risk warning, withdrawal period) are on the page.
+    type: categorical
+    values: [prominent, present_not_prominent, absent]
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: core
+    required: true
+    nullable: true
+    notes: >
+      sieg 14/09 - distinct from disclaimer_present/disclaimer_word_share (which measure raw presence and
+      word share automatically): this judges whether disclosures are placed where a reader will actually
+      see them, which is what a compliance reviewer cares about.
+
+  - name: hidden_conditions_behind_free_claim
+    dimension: banking_domain
+    definition: Whether "free" is the headline claim while conditions (minimum balance, usage requirement) sit in small print.
+    type: boolean
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - ties directly to the kickoff deck's own top-NPS-irritator finding about ING's communications.
+
+  - name: esg_claim_specificity
+    dimension: banking_domain
+    definition: Whether a sustainability claim carries a verifiable reference or figure, is an adjective only, or is absent.
+    type: categorical
+    values: [no_claim, vague_adjective_only, backed_by_reference_or_figure]
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: >
+      sieg 14/09 - recalibrated from an earlier idea of reading the SFDR Article 6/8/9 classification
+      directly off the page; that classification lives in the KID/prospectus, rarely on a marketing page,
+      so this coarser version is the realistic one.
+
+  - name: green_product_specific_benefit
+    dimension: banking_domain
+    definition: Whether a concrete financial benefit (e.g. a rate discount) is explicitly tied to a green/energy-performance criterion, vs a generic sustainability claim.
+    type: boolean
+    extraction: rubric
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - a green mortgage with an actual rate discount is a stronger signal than "we are sustainable".
+
+  - name: mentions_loyalty_or_referral
+    dimension: banking_domain
+    definition: Whether the page advertises a loyalty programme or a referral scheme ("invite a friend").
+    type: boolean
+    extraction: automatic
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: >
+      sieg 14/09 - a public-page proxy for CRM/retention strategy. True CRM/personalisation data sits
+      behind authentication and is out of reach entirely (DR-01/DR-09) - this is not a substitute for it,
+      just the closest observable signal on a public page.
+
+  - name: images_have_alt_text
+    dimension: banking_domain
+    definition: Whether content images on the page carry non-empty alt text.
+    type: boolean
+    extraction: automatic
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+
+  - name: meta_title
+    dimension: banking_domain
+    definition: The <title> tag content - what the bank prioritises for organic search, often different from the page's visual message.
+    type: string
+    extraction: automatic
+    source: html_text
+    comparability: within_language
+    tier: extended
+    required: false
+    nullable: true
+
+  - name: institutional_trust_signal_present
+    dimension: banking_domain
+    definition: Whether the page invokes tenure, customer count, or ownership backing (e.g. state ownership) as a trust/safety argument.
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - e.g. Belfius is 100%% Belgian-State-owned, a safety argument unique to that bank, tracing to the 2011 Dexia/Belfius restructuring.
+
+  - name: youth_student_targeting
+    dimension: banking_domain
+    definition: Whether a junior/student account or youth-oriented offer is promoted, as a long-horizon acquisition strategy.
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+
+  - name: secondary_bank_positioning
+    dimension: banking_domain
+    definition: Whether the bank frames itself as an addition to an existing bank ("keep your current bank, add us") rather than a full replacement.
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+
+  - name: expat_cross_border_targeting
+    dimension: banking_domain
+    definition: Whether the page targets expats/international clients (e.g. English content framed around "moving to Belgium").
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+
+  - name: branch_network_cited_as_benefit
+    dimension: banking_domain
+    definition: Whether the page explicitly cites physical branch/ATM network size as an advantage.
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+    notes: sieg 14/09 - structurally unavailable to a neobank; a hard marker of business model.

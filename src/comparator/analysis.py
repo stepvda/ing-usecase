@@ -198,6 +198,15 @@ def positioning_axis(
 ) -> Positioning:
     """Project every bank onto the traditional-challenger axis (BO-02)."""
     fd = fd or load_dictionary()
+    # sieg 14/09: dropna(axis=1, how="any") drops a feature from EVERY bank's
+    # vector the moment even one bank is missing it. Invisible on the fixture
+    # (nothing is ever missing), but with Dan's real captures a single gap on
+    # one page can silently shrink the comparable feature set for everyone.
+    # not fixing this alone - a defensible design choice (no imputation =
+    # honest) - but flagging for Stephane: at minimum this should log/warn how
+    # many features got dropped and why, rather than doing it silently.
+    # same comment applies to similarity_matrix() and profiles._distinctive()
+    # below, which share this exact pattern.
     vectors = standardise(bank_vectors(df, fd, tier=tier).dropna(axis=1, how="any"))
     categories = df.drop_duplicates("bank").set_index("bank")["bank_category"]
 
@@ -225,6 +234,7 @@ def similarity_matrix(
 ) -> pd.DataFrame:
     """Pairwise euclidean distance between banks in standardised feature space."""
     fd = fd or load_dictionary()
+    # sieg 14/09: see the dropna(axis=1, how="any") note in positioning_axis() above.
     vectors = standardise(bank_vectors(df, fd, tier=tier).dropna(axis=1, how="any"))
     banks = vectors.index.tolist()
     data = vectors.to_numpy()
@@ -246,9 +256,16 @@ def cluster_banks(
     return pd.Series(labels, index=dist.index, name="cluster")
 
 
-def nearest_neighbours(df: pd.DataFrame, fd: FeatureDictionary | None = None, *, focus: str = FOCUS_BANK, k: int = 3) -> pd.Series:
+def nearest_neighbours(
+    df: pd.DataFrame,
+    fd: FeatureDictionary | None = None,
+    *,
+    focus: str = FOCUS_BANK,
+    k: int = 3,
+    tier: str | None = None,
+) -> pd.Series:
     """The k banks whose communication most resembles the focus bank."""
-    dist = similarity_matrix(df, fd)
+    dist = similarity_matrix(df, fd, tier=tier)
     return dist.loc[focus].drop(index=focus).sort_values().head(k)
 
 
@@ -300,9 +317,12 @@ def check_deck_claims(df: pd.DataFrame, fd: FeatureDictionary | None = None) -> 
                 evidence = f"{bank}={value:.1f}; lowest is {winner}={series.min():.1f}"
             elif test == "lowest_traditional":
                 sub = series.loc[[b for b in traditional if b in series.index]]
-                winner = sub.idxmin()
-                verdict = "supported" if winner == bank else "not supported"
-                evidence = f"{bank}={value:.1f}; lowest traditional is {winner}={sub.min():.1f}"
+                if sub.empty:
+                    verdict, evidence = "not testable", "no traditional banks with this feature in the dataset"
+                else:
+                    winner = sub.idxmin()
+                    verdict = "supported" if winner == bank else "not supported"
+                    evidence = f"{bank}={value:.1f}; lowest traditional is {winner}={sub.min():.1f}"
             elif test == "only_traditional_true":
                 others = [b for b in traditional if b != bank and b in series.index]
                 others_true = [b for b in others if series[b] > 0]
