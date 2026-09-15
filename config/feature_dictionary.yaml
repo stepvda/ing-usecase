@@ -955,6 +955,24 @@ features:
     required: true
     nullable: true
 
+  # sieg 15/09: gap flagged in the same discussion as first_time_investor_targeting.
+  # HONEST LIMITATION: every capture uses one fixed 1440x900 viewport (see
+  # page_height_px above) - this project never renders a page at a mobile
+  # viewport, so this cannot be an automatic responsive-layout measurement. It
+  # is scored as a visual impression of the design register instead (single
+  # column, card-like, large tap targets vs multi-column, hover-dependent,
+  # dense), same status as layout_archetype right above it.
+  - name: mobile_first_design_signal
+    dimension: layout_structure
+    definition: Whether the page's visual design reads as built mobile-first (single-column cards, large tap targets, minimal above-fold density) rather than desktop-first (multi-column, hover-dependent, dense), judged from the desktop screenshot. Not a responsive/viewport measurement - this project only captures one fixed viewport.
+    type: boolean
+    extraction: rubric
+    source: screenshot
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+
   # --- Marketing principles ---------------------------------------------------
   - name: aida_attention
     dimension: marketing_principles
@@ -1259,3 +1277,34 @@ features:
     required: false
     nullable: true
     notes: sieg 14/09 - structurally unavailable to a neobank; a hard marker of business model.
+
+  # sieg 15/09: gap flagged after the freeze discussion - none of the existing
+  # banking-domain features distinguish a page aimed at someone new to
+  # investing (beginner framing, low minimum, educational tone) from one aimed
+  # at an experienced investor, even though product_family already has
+  # "investment". Same lifetime-value acquisition logic as youth_student_targeting,
+  # just a different life stage/entry point.
+  - name: first_time_investor_targeting
+    dimension: banking_domain
+    definition: Whether the page frames investing as a first step for a novice (e.g. "start with as little as", beginner glossary, low/no minimum) rather than assuming existing investment experience.
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true
+
+  # sieg 15/09: symmetric gap at the other end of the life cycle from
+  # youth_student_targeting above - same lifetime-value acquisition logic,
+  # pension/succession/wealth-transfer end instead of the entry end.
+  - name: senior_preretirement_targeting
+    dimension: banking_domain
+    definition: Whether the page targets a pre-retirement/senior life stage - pension planning, wealth transfer or succession, end-of-career estate management - as the entry point.
+    type: boolean
+    extraction: model_assisted
+    source: html_text
+    comparability: cross_language
+    tier: extended
+    required: false
+    nullable: true

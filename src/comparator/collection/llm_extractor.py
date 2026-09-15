@@ -30,7 +30,8 @@ MODEL_FIELDS = (
     "primary_product", "dominant_image_type", "people_present", "imagery_register",
     "institutional_trust_signal_present", "youth_student_targeting",
     "secondary_bank_positioning", "expat_cross_border_targeting",
-    "branch_network_cited_as_benefit",
+    "branch_network_cited_as_benefit", "first_time_investor_targeting",
+    "senior_preretirement_targeting",
 )
 
 SYSTEM_PROMPT = """You are extracting structured features from a bank campaign page for a
@@ -50,6 +51,10 @@ Return ONLY a JSON object with exactly these keys:
 - "expat_cross_border_targeting": boolean, does the page target expats/international clients
 - "branch_network_cited_as_benefit": boolean, does the page explicitly cite branch/ATM network
   size as an advantage
+- "first_time_investor_targeting": boolean, does the page frame investing as a first step for a
+  novice (beginner glossary, low/no minimum amount) rather than assuming existing experience
+- "senior_preretirement_targeting": boolean, does the page target a pre-retirement/senior life
+  stage (pension planning, wealth transfer or succession, end-of-career estate management)
 
 No preamble, no markdown fences, JSON only."""
 
@@ -64,6 +69,8 @@ class ModelAssistedFields(BaseModel):
     secondary_bank_positioning: bool
     expat_cross_border_targeting: bool
     branch_network_cited_as_benefit: bool
+    first_time_investor_targeting: bool
+    senior_preretirement_targeting: bool
 
 
 class LLMExtractionError(Exception):

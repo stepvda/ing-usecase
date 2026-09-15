@@ -8,7 +8,7 @@
 **Grain** One row per campaign page per capture date.  
 **Freeze target** End of Day 2 - Tuesday 15 September 2026
 
-91 features — 61 core, 30 extended.
+94 features — 61 core, 33 extended.
 
 ## How to read the tables
 
@@ -125,7 +125,7 @@
 
 ## Layout & structure
 
-*PRD section 11 - "Is the page easy to read? How is it organised?"* — 10 features
+*PRD section 11 - "Is the page easy to read? How is it organised?"* — 11 features
 
 | Feature | Type | Extraction | Comparability | Tier | Definition |
 | --- | --- | --- | --- | --- | --- |
@@ -139,6 +139,7 @@
 | `above_fold_element_count` | integer<br>[0, ∞] | automatic | cross_language | extended | Number of distinct interactive or content elements visible without scrolling. |
 | `has_comparison_table` | boolean | automatic | cross_language | extended | Whether the page contains a product comparison table. |
 | `layout_archetype` | categorical<br>`hero_stacked` · `split_columns` · `card_grid` · `long_form` | rubric | cross_language | core | Overall structural pattern of the page. |
+| `mobile_first_design_signal` | boolean | rubric | cross_language | extended | Whether the page's visual design reads as built mobile-first (single-column cards, large tap targets, minimal above-fold density) rather than desktop-first (multi-column, hover-dependent, dense), judged from the desktop screenshot. Not a responsive/viewport measurement - this project only captures one fixed viewport. |
 
 ## Marketing principles
 
@@ -156,7 +157,7 @@
 
 ## Banking-domain signals (Siegried's addendum)
 
-*PRD section 11 bis / Plan section 4.3 bis - retail-banking angles a generic marketing framework misses* — 17 features
+*PRD section 11 bis / Plan section 4.3 bis - retail-banking angles a generic marketing framework misses* — 19 features
 
 | Feature | Type | Extraction | Comparability | Tier | Definition |
 | --- | --- | --- | --- | --- | --- |
@@ -177,3 +178,5 @@
 | `secondary_bank_positioning` | boolean | model_assisted | cross_language | extended | Whether the bank frames itself as an addition to an existing bank ("keep your current bank, add us") rather than a full replacement. |
 | `expat_cross_border_targeting` | boolean | model_assisted | cross_language | extended | Whether the page targets expats/international clients (e.g. English content framed around "moving to Belgium"). |
 | `branch_network_cited_as_benefit` | boolean | model_assisted | cross_language | extended | Whether the page explicitly cites physical branch/ATM network size as an advantage.<br>*sieg 14/09 - structurally unavailable to a neobank; a hard marker of business model.* |
+| `first_time_investor_targeting` | boolean | model_assisted | cross_language | extended | Whether the page frames investing as a first step for a novice (e.g. "start with as little as", beginner glossary, low/no minimum) rather than assuming existing investment experience. |
+| `senior_preretirement_targeting` | boolean | model_assisted | cross_language | extended | Whether the page targets a pre-retirement/senior life stage - pension planning, wealth transfer or succession, end-of-career estate management - as the entry point. |

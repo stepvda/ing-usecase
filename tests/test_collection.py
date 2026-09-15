@@ -164,6 +164,8 @@ _VALID_RESPONSE = {
     "secondary_bank_positioning": False,
     "expat_cross_border_targeting": False,
     "branch_network_cited_as_benefit": True,
+    "first_time_investor_targeting": False,
+    "senior_preretirement_targeting": False,
 }
 
 

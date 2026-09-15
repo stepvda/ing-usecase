@@ -257,6 +257,18 @@ def build_fixture(
                     # cross-border workers in Belgium.
                     "expat_cross_border_targeting": bank == "ing",
                     "branch_network_cited_as_benefit": a["category"] == "traditional",
+                    # sieg 15/09: challengers lead with low/no-minimum, self-service
+                    # investing (round-ups, robo style); traditional banks route a
+                    # first-time investor to an advisor instead of a beginner page.
+                    "first_time_investor_targeting": a["category"] == "challenger",
+                    # sieg 15/09: pension/succession framing is a traditional-bank
+                    # posture in this archetype set - challengers skew toward a
+                    # younger customer base and don't lead with this angle.
+                    "senior_preretirement_targeting": a["category"] == "traditional",
+                    # sieg 15/09: mirrors the "dark, 3D/illustrated, card_grid" visual
+                    # register already encoded per-archetype above (img_type/layout) -
+                    # challengers use the same card-grid, tap-friendly register here.
+                    "mobile_first_design_signal": a["layout"] == "card_grid",
                 }
             )
 
