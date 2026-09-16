@@ -1,4 +1,4 @@
-# Export des données KBC — Benchmark marketing KBC vs ING
+# Export des données KBC — Benchmark marketing ING · KBC · CBC
 
 Document généré automatiquement à partir de `benchmark.db`, destiné à servir d'entrée à un autre pipeline (rapprochement avec les campagnes publicitaires réelles). Toutes les données ci-dessous concernent uniquement la banque KBC.
 
@@ -22,12 +22,13 @@ Document généré automatiquement à partir de `benchmark.db`, destiné à serv
 | Épargne-pension (`epargne_pension`) | KBC pensioensparen, KBC Pension Savings Fund |
 | Assurance habitation (`assurance_habitation`) | KBC brandverzekering |
 | Prêt hypothécaire (`pret_hypothecaire`) | KBC hypothecair krediet |
+| Marque (recherche générique) (`marque_generique`) | KBC |
 
 ## Données Google Trends brutes
 
-3930 points hebdomadaires, 15 termes, du 2021-09-12 au 2026-09-13. Fournies séparément dans **`kbc_trends_data.csv`** (colonnes : product_id, product_label, term, bank, language, date, value) — non incluses ici pour garder ce document lisible.
+4192 points hebdomadaires, 16 termes, du 2021-09-12 au 2026-09-13. Fournies séparément dans **`kbc_trends_data.csv`** (colonnes : product_id, product_label, term, bank, language, date, value) — non incluses ici pour garder ce document lisible.
 
-## Anomalies détectées (127)
+## Anomalies détectées (132)
 
 | Fiche produit | Terme | Date | Valeur | Type d'anomalie | Score de déviation |
 |---|---|---|---|---|---|
@@ -59,8 +60,10 @@ Document généré automatiquement à partir de `benchmark.db`, destiné à serv
 | compte_a_vue | Compte Plus KBC | 2022-06-12 | 16 | Pic isolé | 7.614 |
 | app_mobile | KBC Mobile | 2022-06-26 | 5 | Pic isolé | 2.466 |
 | app_mobile | KBC Touch | 2022-06-26 | 89 | Tendance soutenue | 1.754 |
+| marque_generique | KBC | 2022-06-26 | 82 | Tendance soutenue | 2.085 |
 | app_mobile | KBC Touch | 2022-07-03 | 95 | Tendance soutenue | 2.24 |
 | epargne_pension | KBC pensioensparen | 2022-07-03 | 51 | Pic isolé | 3.11 |
+| marque_generique | KBC | 2022-07-03 | 81 | Tendance soutenue | 1.972 |
 | app_mobile | KBC Touch | 2022-07-10 | 90 | Tendance soutenue | 1.835 |
 | carte_credit | KBC kredietkaart | 2022-07-24 | 34 | Pic isolé | 1.516 |
 | carte_credit | KBC Flex Budget | 2022-10-23 | 21 | Pic isolé | 9.216 |
@@ -78,7 +81,9 @@ Document généré automatiquement à partir de `benchmark.db`, destiné à serv
 | epargne_pension | KBC pensioensparen | 2023-07-30 | 59 | Pic isolé | 3.644 |
 | carte_credit | KBC kredietkaart | 2023-08-20 | 34 | Pic isolé | 1.516 |
 | compte_epargne | KBC spaarrekening | 2023-08-20 | 100 | Tendance soutenue | 5.762 |
+| marque_generique | KBC | 2023-08-20 | 83 | Tendance soutenue | 2.198 |
 | compte_epargne | KBC spaarrekening | 2023-08-27 | 80 | Tendance soutenue | 4.374 |
+| marque_generique | KBC | 2023-08-27 | 90 | Tendance soutenue | 2.989 |
 | assurance_habitation | KBC brandverzekering | 2023-09-17 | 54 | Pic isolé | 3.586 |
 | compte_professionnel | KBC zakelijke rekening | 2023-10-15 | 62 | Pic isolé | 6.82 |
 | compte_epargne | KBC Start2Save | 2023-10-22 | 15 | Pic isolé | 6.737 |
@@ -110,6 +115,7 @@ Document généré automatiquement à partir de `benchmark.db`, destiné à serv
 | compte_epargne | KBC spaarrekening | 2024-08-25 | 39 | Tendance soutenue | 1.53 |
 | compte_a_vue | KBC zichtrekening | 2024-09-01 | 42 | Tendance soutenue | 3.882 |
 | compte_epargne | KBC spaarrekening | 2024-09-01 | 89 | Tendance soutenue | 4.999 |
+| marque_generique | KBC | 2024-09-01 | 100 | Pic isolé | 4.12 |
 | pret_hypothecaire | KBC hypothecair krediet | 2024-09-01 | 67 | Pic isolé | 7.698 |
 | compte_a_vue | KBC zichtrekening | 2024-09-08 | 34 | Tendance soutenue | 3.067 |
 | compte_epargne | KBC spaarrekening | 2024-09-08 | 48 | Tendance soutenue | 2.154 |

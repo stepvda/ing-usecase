@@ -1,4 +1,4 @@
-"""Streamlit app: KBC vs ING Google Trends benchmark, one tab per product sheet.
+"""Streamlit app: ING vs KBC vs CBC Google Trends benchmark, one tab per product sheet.
 
 Reads trends_data and anomalies from SQLite. Both tables are populated by
 separate pipeline steps (collectors/trends_collector.py,
@@ -13,12 +13,17 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from config import ANOMALY_TYPE_LABELS, DB_PATH, PRODUCTS
+from config import ANOMALY_TYPE_LABELS, DB_PATH, PRODUCTS, TERM_DISPLAY_LABELS
 
 PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#c98500", "#e87ba4"]
 ANOMALY_SYMBOLS = {"isolated_spike": "diamond", "sustained_trend": "star"}
+BANK_DASH = {"KBC": "solid", "ING": "dash", "CBC": "dashdot"}
 
-st.set_page_config(page_title="Benchmark KBC vs ING", layout="wide")
+st.set_page_config(page_title="Benchmark ING KBC CBC", layout="wide")
+
+
+def display_term(term):
+    return TERM_DISPLAY_LABELS.get(term, term)
 
 
 @st.cache_data
@@ -38,15 +43,16 @@ def build_chart(product, trends_df, anomalies_df):
 
     for i, t in enumerate(product["terms"]):
         term, bank, lang = t["term"], t["bank"], t["language"]
+        label = display_term(term)
         color = PALETTE[i % len(PALETTE)]
-        dash = "solid" if bank == "KBC" else "dash"
+        dash = BANK_DASH.get(bank, "solid")
 
         series = trends_df[(trends_df["product_id"] == pid) & (trends_df["term"] == term)].sort_values("date")
         fig.add_trace(go.Scatter(
             x=series["date"], y=series["value"], mode="lines",
-            name=f"{term} ({bank} · {lang.upper()})",
+            name=f"{label} ({bank} · {lang.upper()})",
             line=dict(color=color, width=2, dash=dash),
-            hovertemplate=f"<b>{term}</b><br>{bank} · {lang.upper()}<br>%{{x|%b %Y}}: %{{y}}<extra></extra>",
+            hovertemplate=f"<b>{label}</b><br>{bank} · {lang.upper()}<br>%{{x|%b %Y}}: %{{y}}<extra></extra>",
         ))
 
         term_anomalies = anomalies_df[(anomalies_df["product_id"] == pid) & (anomalies_df["term"] == term)]
@@ -59,7 +65,7 @@ def build_chart(product, trends_df, anomalies_df):
                 marker=dict(symbol=symbol, size=12, color=color, line=dict(color="#1a1a1a", width=1.2)),
                 showlegend=False,
                 hovertemplate=(
-                    f"<b>{term}</b><br>{ANOMALY_TYPE_LABELS[atype]}"
+                    f"<b>{label}</b><br>{ANOMALY_TYPE_LABELS[atype]}"
                     "<br>%{x|%b %Y}: %{y}<extra></extra>"
                 ),
             ))
@@ -91,6 +97,7 @@ def render_anomalies_table(product, anomalies_df):
 
     subset["date"] = subset["date"].dt.strftime("%Y-%m-%d")
     subset["anomaly_type"] = subset["anomaly_type"].map(ANOMALY_TYPE_LABELS)
+    subset["term"] = subset["term"].map(display_term)
     subset = subset.rename(columns={
         "term": "Terme", "bank": "Banque", "date": "Date",
         "value": "Valeur", "anomaly_type": "Type d'anomalie",
@@ -111,7 +118,7 @@ def render_raw_data(product, trends_df):
 
     term_options = [t["term"] for t in product["terms"]]
     selected_terms = st.multiselect(
-        "Termes", term_options, default=term_options, key=f"terms_{pid}",
+        "Termes", term_options, default=term_options, format_func=display_term, key=f"terms_{pid}",
     )
     min_date, max_date = subset["date"].min().date(), subset["date"].max().date()
     date_range = st.date_input(
@@ -123,7 +130,9 @@ def render_raw_data(product, trends_df):
         start, end = date_range
         filtered = filtered[(filtered["date"].dt.date >= start) & (filtered["date"].dt.date <= end)]
 
-    display = filtered.rename(columns={
+    display = filtered.copy()
+    display["term"] = display["term"].map(display_term)
+    display = display.rename(columns={
         "term": "Terme", "bank": "Banque", "language": "Langue",
         "date": "Date", "value": "Valeur",
     })
@@ -143,7 +152,7 @@ def render_product_tab(product, trends_df, anomalies_df):
 
 
 def main():
-    st.title("Benchmark marketing KBC vs ING")
+    st.title("Benchmark marketing ING · KBC · CBC")
     st.caption(
         "Intérêt de recherche Google Trends (Belgique, 5 dernières années) par fiche produit — "
         "les anomalies marquées ici sont les périodes où l'intérêt de recherche d'un produit a été "
