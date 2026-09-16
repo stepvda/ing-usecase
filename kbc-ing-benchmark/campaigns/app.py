@@ -1,5 +1,5 @@
-"""Streamlit app: one tab per campaign (metadata, matched anomalies, score
-detail) plus a final KBC vs CBC vs ING comparison tab.
+"""Streamlit app: one tab per bank (KBC, CBC, ING) with its campaigns
+ranked by score, plus a final KBC vs CBC vs ING comparison tab.
 
 Reads campaigns, campaign_anomaly_matches and campaign_scores from SQLite,
 populated by campaigns/load_campaigns.py and campaigns/scoring.py. Reuses
@@ -58,7 +58,7 @@ def matches_dataframe(campaign_matches):
     ]]
 
 
-def render_campaign_tab(c, campaign_matches):
+def render_campaign_detail(c, campaign_matches):
     col1, col2, col3 = st.columns(3)
     col1.metric("Banque", c["bank"])
     period = c["start_date"] + (f" → {c['end_date']}" if c["end_date"] else "")
@@ -93,6 +93,31 @@ def render_campaign_tab(c, campaign_matches):
 
     st.subheader("Anomalies rapprochées")
     st.dataframe(matches_dataframe(campaign_matches), hide_index=True, width="stretch")
+
+
+def render_bank_tab(bank, bank_campaigns, matches):
+    ranked = sorted(
+        bank_campaigns,
+        key=lambda c: c["final_score"] if c["status"] == "scorable" else -1,
+        reverse=True,
+    )
+
+    st.subheader(f"Classement des campagnes {bank} ({len(ranked)})")
+    recap_rows = [{
+        "#": i + 1, "Campagne": c["name"],
+        "Type": CAMPAIGN_TYPE_LABELS.get(c["campaign_type"], c["campaign_type"]),
+        "Période": c["start_date"] + (f" → {c['end_date']}" if c["end_date"] else ""),
+        "Anomalies": c["anomaly_count"] if c["status"] == "scorable" else "-",
+        "Fiches touchées": c["fiches_touched"] if c["status"] == "scorable" else "-",
+        "Score": c["final_score"] if c["status"] == "scorable" else "Non notable",
+    } for i, c in enumerate(ranked)]
+    st.dataframe(pd.DataFrame(recap_rows), hide_index=True, width="stretch")
+
+    st.subheader("Détail par campagne")
+    for c in ranked:
+        score_label = c["final_score"] if c["status"] == "scorable" else "non notable"
+        with st.expander(f"{c['name']} — score {score_label}"):
+            render_campaign_detail(c, matches.get(c["id"], []))
 
 
 def render_comparison_tab(campaigns):
@@ -159,9 +184,9 @@ def render_comparison_tab(campaigns):
 def main():
     st.title("Campagnes publicitaires vs impact Google Trends")
     st.caption(
-        "Un onglet par campagne cataloguée (KBC, CBC, ING), avec les anomalies Trends "
-        "rapprochées et le score d'efficacité calculé. Dernier onglet : comparatif agrégé "
-        "KBC vs CBC vs ING."
+        "Un onglet par banque (KBC, CBC, ING) avec ses campagnes classées par score "
+        "d'efficacité ; détail (anomalies rapprochées) dépliable par campagne. "
+        "Dernier onglet : comparatif agrégé KBC vs CBC vs ING."
     )
 
     campaigns, matches = load_data()
@@ -172,15 +197,13 @@ def main():
         )
         st.stop()
 
-    bank_rank = {b: i for i, b in enumerate(BANK_ORDER)}
-    campaigns = sorted(campaigns, key=lambda c: (bank_rank.get(c["bank"], 99), c["start_date"]))
-
-    tab_labels = [f"{c['bank']} · {c['name']}" for c in campaigns] + ["Comparatif KBC vs CBC vs ING"]
+    tab_labels = list(BANK_ORDER) + ["Comparatif KBC vs CBC vs ING"]
     tabs = st.tabs(tab_labels)
 
-    for tab, c in zip(tabs[:-1], campaigns):
+    for tab, bank in zip(tabs[:-1], BANK_ORDER):
         with tab:
-            render_campaign_tab(c, matches.get(c["id"], []))
+            bank_campaigns = [c for c in campaigns if c["bank"] == bank]
+            render_bank_tab(bank, bank_campaigns, matches)
 
     with tabs[-1]:
         render_comparison_tab(campaigns)
