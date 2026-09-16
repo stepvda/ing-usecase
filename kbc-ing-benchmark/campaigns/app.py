@@ -1,5 +1,5 @@
 """Streamlit app: one tab per campaign (metadata, matched anomalies, score
-detail) plus a final ING vs KBC/CBC comparison tab.
+detail) plus a final KBC vs CBC vs ING comparison tab.
 
 Reads campaigns, campaign_anomaly_matches and campaign_scores from SQLite,
 populated by campaigns/load_campaigns.py and campaigns/scoring.py. Reuses
@@ -21,7 +21,7 @@ import streamlit as st
 
 from config import ANOMALY_TYPE_LABELS, DB_PATH  # noqa: E402
 from reports import (  # noqa: E402
-    BANK_ORDER, CAMPAIGN_TYPE_LABELS, NOT_SCORABLE_REASON_LABELS, aggregate_stats, camp,
+    BANK_ORDER, CAMPAIGN_TYPE_LABELS, NOT_SCORABLE_REASON_LABELS, aggregate_stats,
     display_term, load_campaigns_with_scores, load_matches_for_campaign,
 )
 
@@ -102,52 +102,38 @@ def render_comparison_tab(campaigns):
 
     st.caption(
         f"Calculé sur {len(scorable)} campagnes notables (sur {len(campaigns)} cataloguées ; "
-        f"{len(not_scorable)} non notables listées en bas de page). KBC et CBC sont la même "
-        "banque (marque néerlandophone vs francophone du même groupe), regroupées en un camp "
-        "\"KBC/CBC\" face à ING."
+        f"{len(not_scorable)} non notables listées en bas de page). KBC et CBC sont deux "
+        "marques du même groupe (KBC Group) mais traitées ici comme des entités distinctes, "
+        "au même titre qu'ING."
     )
 
     col1, col2 = st.columns(2)
     with col1:
         fig = go.Figure(go.Bar(
-            x=["ING", "KBC/CBC"], y=[stats["ING"]["total_score"], stats["KBC+CBC"]["total_score"]],
-            marker_color=[BANK_COLOR["ING"], BANK_COLOR["KBC"]],
+            x=BANK_ORDER, y=[stats[b]["total_score"] for b in BANK_ORDER],
+            marker_color=[BANK_COLOR[b] for b in BANK_ORDER],
         ))
         fig.update_layout(title="Score total", height=360, margin=dict(t=40, b=10, l=10, r=10))
         st.plotly_chart(fig, width="stretch")
     with col2:
         fig = go.Figure(go.Bar(
-            x=["ING", "KBC/CBC"], y=[stats["ING"]["avg_score"], stats["KBC+CBC"]["avg_score"]],
-            marker_color=[BANK_COLOR["ING"], BANK_COLOR["KBC"]],
+            x=BANK_ORDER, y=[stats[b]["avg_score"] for b in BANK_ORDER],
+            marker_color=[BANK_COLOR[b] for b in BANK_ORDER],
         ))
         fig.update_layout(title="Score moyen par campagne", height=360, margin=dict(t=40, b=10, l=10, r=10))
         st.plotly_chart(fig, width="stretch")
 
-    st.subheader("Vue par camp")
-    camp_rows = [{
-        "Camp": g, "Campagnes notables": stats[g]["total"], "Score total": stats[g]["total_score"],
-        "Score moyen": stats[g]["avg_score"], "Taux de succès": f"{stats[g]['success_rate']}%",
-    } for g in ("KBC+CBC", "ING")]
-    st.dataframe(pd.DataFrame(camp_rows), hide_index=True, width="stretch")
-
-    st.subheader("Vue par banque (KBC et CBC détaillés séparément)")
-    bank_rows = []
-    for bank in BANK_ORDER:
-        bank_campaigns = [c for c in scorable if c["bank"] == bank]
-        total = len(bank_campaigns)
-        total_score = round(sum(c["final_score"] for c in bank_campaigns), 3)
-        with_match = sum(1 for c in bank_campaigns if c["anomaly_count"] > 0)
-        bank_rows.append({
-            "Banque": bank, "Campagnes notables": total, "Score total": total_score,
-            "Score moyen": round(total_score / total, 3) if total else None,
-            "Taux de succès": f"{round(with_match / total * 100, 1)}%" if total else "-",
-        })
+    st.subheader("Vue par banque")
+    bank_rows = [{
+        "Banque": b, "Campagnes notables": stats[b]["total"], "Score total": stats[b]["total_score"],
+        "Score moyen": stats[b]["avg_score"], "Taux de succès": f"{stats[b]['success_rate']}%",
+    } for b in BANK_ORDER]
     st.dataframe(pd.DataFrame(bank_rows), hide_index=True, width="stretch")
 
     st.subheader("Répartition par type de campagne")
     type_rows = [{
-        "Camp": g, **{CAMPAIGN_TYPE_LABELS[k]: stats[g]["type_counts"].get(k, 0) for k in CAMPAIGN_TYPE_LABELS}
-    } for g in ("KBC+CBC", "ING")]
+        "Banque": b, **{CAMPAIGN_TYPE_LABELS[k]: stats[b]["type_counts"].get(k, 0) for k in CAMPAIGN_TYPE_LABELS}
+    } for b in BANK_ORDER]
     st.dataframe(pd.DataFrame(type_rows), hide_index=True, width="stretch")
 
     st.subheader("Classement des campagnes (toutes banques, notables uniquement)")
@@ -175,7 +161,7 @@ def main():
     st.caption(
         "Un onglet par campagne cataloguée (KBC, CBC, ING), avec les anomalies Trends "
         "rapprochées et le score d'efficacité calculé. Dernier onglet : comparatif agrégé "
-        "ING vs KBC/CBC."
+        "KBC vs CBC vs ING."
     )
 
     campaigns, matches = load_data()
@@ -189,7 +175,7 @@ def main():
     bank_rank = {b: i for i, b in enumerate(BANK_ORDER)}
     campaigns = sorted(campaigns, key=lambda c: (bank_rank.get(c["bank"], 99), c["start_date"]))
 
-    tab_labels = [f"{c['bank']} · {c['name']}" for c in campaigns] + ["Comparatif ING vs KBC/CBC"]
+    tab_labels = [f"{c['bank']} · {c['name']}" for c in campaigns] + ["Comparatif KBC vs CBC vs ING"]
     tabs = st.tabs(tab_labels)
 
     for tab, c in zip(tabs[:-1], campaigns):

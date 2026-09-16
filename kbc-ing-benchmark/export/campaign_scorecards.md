@@ -1,17 +1,10 @@
 # Fiches campagnes — rapprochement avec les anomalies Trends
 
-Une section par campagne cataloguée (KBC, CBC, ING) : métadonnées, anomalies Trends rapprochées dans la fenêtre d'attribution, et score d'efficacité détaillé. Voir `campaigns_comparison.md` pour la synthèse agrégée KBC+CBC vs ING.
+Une section par campagne cataloguée (KBC, CBC, ING) : métadonnées, anomalies Trends rapprochées dans la fenêtre d'attribution, et score d'efficacité détaillé. Voir `campaigns_comparison.md` pour la synthèse agrégée KBC vs CBC vs ING.
 
 **Fenêtre d'attribution** : `[start_date, start_date + 21 jours]` (étendue à `end_date + 21 jours` si connue). **Fiches interrogées** : `target_fiches` + `marque_generique` de la banque, ou `marque_generique` seul pour les campagnes `brand`/`sponsoring`/`csr` sans `target_fiches`. **Score** : `Σ (poids_type × min(score_deviation, 10))` par anomalie rapprochée (poids 2 pour tendance soutenue, 1 pour pic isolé), avec un facteur ×0.3 sur les anomalies possiblement dues à une confusion saisonnière (motif large observé la même semaine chez une autre banque sans campagne active), une contribution partagée entre campagnes dont les fenêtres se chevauchent sur une même anomalie, puis un bonus de largeur ×(1 + 0.1×(N_fiches-1)).
 
 ## KBC
-
-### Lancement de Kate (assistante digitale)
-
-- **Période** : 2021-05-05 (confiance : exact) — **Type** : Image de marque — **Langue** : NL
-- **Notes** : Hors fenetre Trends (donnees des 2021-09-12) : aucun rapprochement possible, a documenter comme tel, pas a ignorer silencieusement.
-
-**Non notable** — Antérieure à la fenêtre Trends disponible (données depuis 2021-09-12).
 
 ### KBC Brussels - campagne Kate locale
 
@@ -127,21 +120,6 @@ Aucune anomalie rapprochée dans la fenêtre d'attribution.
 **Score** : 0.0 (brut 0.0 × bonus de largeur 1.0, 0 fiche(s) touchée(s), 0 anomalie(s) sous confusion saisonnière)
 
 ## CBC
-
-### Plan d'Expansion 2.0
-
-- **Période** : 2020-02 (confiance : month_only) — **Type** : Image de marque — **Langue** : FR
-- **Notes** : Hors fenetre Trends. Un motif de pics repetes sur "CBC Banque & Assurance" tout au long de fin 2021-2022 a ete observe et pourrait etre un effet de fond de ce plan pluriannuel - a traiter comme hypothese, pas comme certitude.
-
-**Non notable** — Antérieure à la fenêtre Trends disponible (données depuis 2021-09-12).
-
-### "CBC Assurances se mobilise pour vous"
-
-- **Période** : 2025 (confiance : month_only) — **Type** : Produit — **Langue** : FR
-- **Fiches ciblées** : assurance_habitation_cbc
-- **Notes** : Mois de lancement inconnu ; une serie de pics repartis sur toute l'annee 2025 a ete observee sur assurance_habitation_cbc - possible campagne a deploiement continu plutot que pic unique. Fenetre de rapprochement elargie a toute l'annee envisagee faute de end_date.
-
-**Non notable** — Date trop imprécise pour définir une fenêtre de rapprochement fiable.
 
 ### Plan "Impact27"
 

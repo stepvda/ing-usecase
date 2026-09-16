@@ -4,7 +4,7 @@
 - export/campaign_scorecards.csv - one row per campaign, summary metrics.
 - export/campaign_matches.csv - one row per matched anomaly, full audit
   detail (contribution, confound/overlap flags).
-- export/campaigns_comparison.md - aggregate KBC+CBC vs ING comparison.
+- export/campaigns_comparison.md - aggregate KBC vs CBC vs ING comparison.
 
 Run after campaigns/scoring.py. Does not modify the database.
 """
@@ -38,10 +38,6 @@ BANK_ORDER = ["KBC", "CBC", "ING"]
 
 def display_term(term):
     return TERM_DISPLAY_LABELS.get(term, term)
-
-
-def camp(bank):
-    return "KBC+CBC" if bank in ("KBC", "CBC") else "ING"
 
 
 def fetch_all(conn, query, params=()):
@@ -112,7 +108,7 @@ def write_scorecards_md(campaigns, matches_by_campaign):
     lines.append(
         "Une section par campagne cataloguée (KBC, CBC, ING) : métadonnées, anomalies "
         "Trends rapprochées dans la fenêtre d'attribution, et score d'efficacité détaillé. "
-        "Voir `campaigns_comparison.md` pour la synthèse agrégée KBC+CBC vs ING."
+        "Voir `campaigns_comparison.md` pour la synthèse agrégée KBC vs CBC vs ING."
     )
     lines.append("")
     lines.append(
@@ -238,18 +234,18 @@ def write_matches_csv(campaigns, matches_by_campaign):
 
 
 def aggregate_stats(scorable_campaigns):
+    """Per-bank stats (KBC, CBC, ING kept fully separate - they are three
+    distinct entities, not a merged camp)."""
     stats = {}
-    for group_key, campaigns_in_group in (
-        ("KBC+CBC", [c for c in scorable_campaigns if camp(c["bank"]) == "KBC+CBC"]),
-        ("ING", [c for c in scorable_campaigns if camp(c["bank"]) == "ING"]),
-    ):
+    for bank in BANK_ORDER:
+        campaigns_in_group = [c for c in scorable_campaigns if c["bank"] == bank]
         total = len(campaigns_in_group)
         total_score = sum(c["final_score"] for c in campaigns_in_group)
         with_match = sum(1 for c in campaigns_in_group if c["anomaly_count"] > 0)
         type_counts = defaultdict(int)
         for c in campaigns_in_group:
             type_counts[c["campaign_type"]] += 1
-        stats[group_key] = {
+        stats[bank] = {
             "total": total,
             "total_score": round(total_score, 3),
             "avg_score": round(total_score / total, 3) if total else None,
@@ -263,53 +259,39 @@ def write_comparison_md(all_campaigns, scorable_campaigns):
     not_scorable = [c for c in all_campaigns if c["status"] == "not_scorable"]
     stats = aggregate_stats(scorable_campaigns)
 
-    lines = ["# Comparatif agrégé — KBC+CBC vs ING", ""]
+    lines = ["# Comparatif agrégé — KBC vs CBC vs ING", ""]
     lines.append(
         f"Calculé sur les {len(scorable_campaigns)} campagnes notables (sur "
         f"{len(all_campaigns)} cataloguées ; {len(not_scorable)} non notables, voir en bas "
-        "de document). Camp KBC+CBC : KBC et CBC sont la même entité (KBC Group), regroupées "
-        "pour ce comparatif tout en restant visibles séparément ci-dessous."
+        "de document). KBC et CBC sont deux marques du même groupe (KBC Group) mais "
+        "traitées ici comme deux entités distinctes, au même titre qu'ING."
     )
     lines.append("")
 
-    lines.append("## Vue par camp")
-    lines.append("")
-    lines.append("| Camp | Campagnes notables | Score total | Score moyen | Taux de succès |")
-    lines.append("|---|---|---|---|---|")
-    for group in ("KBC+CBC", "ING"):
-        s = stats[group]
-        lines.append(
-            f"| {group} | {s['total']} | {s['total_score']} | {s['avg_score']} | {s['success_rate']}% |"
-        )
-    lines.append("")
-
-    lines.append("## Vue par banque (KBC et CBC détaillés séparément)")
+    lines.append("## Vue par banque")
     lines.append("")
     lines.append("| Banque | Campagnes notables | Score total | Score moyen | Taux de succès |")
     lines.append("|---|---|---|---|---|")
     for bank in BANK_ORDER:
-        bank_campaigns = [c for c in scorable_campaigns if c["bank"] == bank]
-        total = len(bank_campaigns)
-        total_score = round(sum(c["final_score"] for c in bank_campaigns), 3)
-        avg_score = round(total_score / total, 3) if total else None
-        with_match = sum(1 for c in bank_campaigns if c["anomaly_count"] > 0)
-        success_rate = round(with_match / total * 100, 1) if total else None
-        lines.append(f"| {bank} | {total} | {total_score} | {avg_score} | {success_rate}% |")
+        s = stats[bank]
+        lines.append(
+            f"| {bank} | {s['total']} | {s['total_score']} | {s['avg_score']} | {s['success_rate']}% |"
+        )
     lines.append("")
 
     lines.append("## Répartition par type de campagne")
     lines.append("")
-    lines.append("| Camp | Image de marque | Produit | Sponsoring | RSE/solidaire |")
+    lines.append("| Banque | Image de marque | Produit | Sponsoring | RSE/solidaire |")
     lines.append("|---|---|---|---|---|")
-    for group in ("KBC+CBC", "ING"):
-        tc = stats[group]["type_counts"]
+    for bank in BANK_ORDER:
+        tc = stats[bank]["type_counts"]
         lines.append(
-            f"| {group} | {tc.get('brand', 0)} | {tc.get('product', 0)} | "
+            f"| {bank} | {tc.get('brand', 0)} | {tc.get('product', 0)} | "
             f"{tc.get('sponsoring', 0)} | {tc.get('csr', 0)} |"
         )
     lines.append("")
     lines.append(
-        "Un camp plus orienté sponsoring/image de marque aura structurellement moins de "
+        "Une banque plus orientée sponsoring/image de marque aura structurellement moins de "
         "campagnes \"matchables\" sur une fiche produit précise (elles ne sont rapprochées "
         "qu'à `marque_generique`) — à garder en tête en comparant les scores bruts."
     )

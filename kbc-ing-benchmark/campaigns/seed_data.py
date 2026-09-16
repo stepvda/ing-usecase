@@ -27,20 +27,9 @@ whether target_fiches is populated, not on campaign_type.
 
 CAMPAIGNS = [
     # --- KBC ---
-    {
-        "bank": "KBC",
-        "name": "Lancement de Kate (assistante digitale)",
-        "language": "NL",
-        "start_date": "2021-05-05",
-        "end_date": None,
-        "date_confidence": "exact",
-        "campaign_type": "brand",
-        "target_fiches": None,
-        "notes": (
-            "Hors fenetre Trends (donnees des 2021-09-12) : aucun rapprochement "
-            "possible, a documenter comme tel, pas a ignorer silencieusement."
-        ),
-    },
+    # "Lancement de Kate (assistante digitale)" (2021-05-05) removed: entirely
+    # before the Trends data window (2021-09-12), never scorable, dropped
+    # rather than kept as permanent dead weight in the catalog.
     {
         "bank": "KBC",
         "name": "KBC Brussels - campagne Kate locale",
@@ -156,21 +145,8 @@ CAMPAIGNS = [
     },
 
     # --- CBC ---
-    {
-        "bank": "CBC",
-        "name": "Plan d'Expansion 2.0",
-        "language": "FR",
-        "start_date": "2020-02",
-        "end_date": None,
-        "date_confidence": "month_only",
-        "campaign_type": "brand",
-        "target_fiches": None,
-        "notes": (
-            "Hors fenetre Trends. Un motif de pics repetes sur \"CBC Banque & Assurance\" "
-            "tout au long de fin 2021-2022 a ete observe et pourrait etre un effet de fond "
-            "de ce plan pluriannuel - a traiter comme hypothese, pas comme certitude."
-        ),
-    },
+    # "Plan d'Expansion 2.0" (2020-02) removed: entirely before the Trends
+    # data window, never scorable.
     {
         "bank": "CBC",
         "name": "Plan \"Impact27\"",
@@ -182,22 +158,8 @@ CAMPAIGNS = [
         "target_fiches": None,
         "notes": "\"Debut 2025\" dans la source.",
     },
-    {
-        "bank": "CBC",
-        "name": "\"CBC Assurances se mobilise pour vous\"",
-        "language": "FR",
-        "start_date": "2025",
-        "end_date": None,
-        "date_confidence": "month_only",
-        "campaign_type": "product",
-        "target_fiches": ["assurance_habitation_cbc"],
-        "notes": (
-            "Mois de lancement inconnu ; une serie de pics repartis sur toute l'annee 2025 "
-            "a ete observee sur assurance_habitation_cbc - possible campagne a deploiement "
-            "continu plutot que pic unique. Fenetre de rapprochement elargie a toute l'annee "
-            "envisagee faute de end_date."
-        ),
-    },
+    # "CBC Assurances se mobilise pour vous" (start_date "2025", year only)
+    # removed: too imprecise to window, never scorable.
     {
         "bank": "CBC",
         "name": "\"La banque des Wallons ambitieux\"",

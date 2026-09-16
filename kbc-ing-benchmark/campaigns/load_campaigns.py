@@ -1,7 +1,10 @@
 """Load the campaign catalog (campaigns/seed_data.py) into benchmark.db.
 
-Idempotent: upserts on (bank, name, start_date), so re-running never
-duplicates rows and picks up edits to seed_data.py.
+Idempotent: fully replaces the campaigns table with the current seed_data
+content on every run, so removing an entry from seed_data.py actually
+removes it from the database instead of leaving a stale row behind.
+Dependent tables (campaign_anomaly_matches, campaign_scores) are rebuilt
+from scratch by campaigns/scoring.py regardless, so this is safe.
 """
 
 import json
@@ -36,22 +39,15 @@ def load(conn):
         for c in CAMPAIGNS
     ]
 
+    conn.execute("DELETE FROM campaign_anomaly_matches")
+    conn.execute("DELETE FROM campaign_scores")
+    conn.execute("DELETE FROM campaigns")
     conn.executemany(
         """
         INSERT INTO campaigns
             (bank, name, language, start_date, end_date, date_confidence,
              agency, campaign_type, target_fiches, channels, source_url, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (bank, name, start_date) DO UPDATE SET
-            language = excluded.language,
-            end_date = excluded.end_date,
-            date_confidence = excluded.date_confidence,
-            agency = excluded.agency,
-            campaign_type = excluded.campaign_type,
-            target_fiches = excluded.target_fiches,
-            channels = excluded.channels,
-            source_url = excluded.source_url,
-            notes = excluded.notes
         """,
         rows,
     )

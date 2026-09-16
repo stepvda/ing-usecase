@@ -1,15 +1,8 @@
-# Comparatif agrégé — KBC+CBC vs ING
+# Comparatif agrégé — KBC vs CBC vs ING
 
-Calculé sur les 21 campagnes notables (sur 24 cataloguées ; 3 non notables, voir en bas de document). Camp KBC+CBC : KBC et CBC sont la même entité (KBC Group), regroupées pour ce comparatif tout en restant visibles séparément ci-dessous.
+Calculé sur les 21 campagnes notables (sur 21 cataloguées ; 0 non notables, voir en bas de document). KBC et CBC sont deux marques du même groupe (KBC Group) mais traitées ici comme deux entités distinctes, au même titre qu'ING.
 
-## Vue par camp
-
-| Camp | Campagnes notables | Score total | Score moyen | Taux de succès |
-|---|---|---|---|---|
-| KBC+CBC | 12 | 25.481 | 2.123 | 33.3% |
-| ING | 9 | 55.667 | 6.185 | 22.2% |
-
-## Vue par banque (KBC et CBC détaillés séparément)
+## Vue par banque
 
 | Banque | Campagnes notables | Score total | Score moyen | Taux de succès |
 |---|---|---|---|---|
@@ -19,12 +12,13 @@ Calculé sur les 21 campagnes notables (sur 24 cataloguées ; 3 non notables, vo
 
 ## Répartition par type de campagne
 
-| Camp | Image de marque | Produit | Sponsoring | RSE/solidaire |
+| Banque | Image de marque | Produit | Sponsoring | RSE/solidaire |
 |---|---|---|---|---|
-| KBC+CBC | 6 | 5 | 0 | 1 |
+| KBC | 4 | 5 | 0 | 1 |
+| CBC | 2 | 0 | 0 | 0 |
 | ING | 1 | 5 | 3 | 0 |
 
-Un camp plus orienté sponsoring/image de marque aura structurellement moins de campagnes "matchables" sur une fiche produit précise (elles ne sont rapprochées qu'à `marque_generique`) — à garder en tête en comparant les scores bruts.
+Une banque plus orientée sponsoring/image de marque aura structurellement moins de campagnes "matchables" sur une fiche produit précise (elles ne sont rapprochées qu'à `marque_generique`) — à garder en tête en comparant les scores bruts.
 
 ## Classement des campagnes (toutes banques, notables uniquement)
 
@@ -52,10 +46,6 @@ Un camp plus orienté sponsoring/image de marque aura structurellement moins de 
 | 20 | KBC | KBC Commercial Banking - "Ondernemen zonder grenzen" | product | 0 | 0 | 0.0 |
 | 21 | KBC | "No stress. Kate it." | product | 0 | 0 | 0.0 |
 
-## Campagnes non notables (3)
+## Campagnes non notables (0)
 
-| Banque | Campagne | Date | Raison |
-|---|---|---|---|
-| CBC | Plan d'Expansion 2.0 | 2020-02 | Antérieure à la fenêtre Trends disponible (données depuis 2021-09-12) |
-| CBC | "CBC Assurances se mobilise pour vous" | 2025 | Date trop imprécise pour définir une fenêtre de rapprochement fiable |
-| KBC | Lancement de Kate (assistante digitale) | 2021-05-05 | Antérieure à la fenêtre Trends disponible (données depuis 2021-09-12) |
+Aucune.
