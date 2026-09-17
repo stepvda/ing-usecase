@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+# SQLite state is regenerated locally from config.py + the collectors; see
+# docs/pipeline_google_trends.md section 2.
+benchmark.db
+benchmark_backup_*.db
+
+# Run logs are transient, not pipeline output.
+data/*.log
+campaigns_streamlit_log.txt
+streamlit_log.txt
