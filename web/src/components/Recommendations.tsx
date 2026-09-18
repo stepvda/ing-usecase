@@ -29,6 +29,8 @@ export function Recommendations({ report }: { report: Report }) {
   const [error, setError] = useState<string | null>(null);
   const [language, setLanguage] = useState("fr");
   const [site, setSite] = useState<SiteStatus | null>(null);
+  const [includeTrends, setIncludeTrends] = useState(false);
+  const trendsAvailable = Boolean(report.trends?.available);
 
   useEffect(() => {
     fetchRecommendations()
@@ -53,7 +55,7 @@ export function Recommendations({ report }: { report: Report }) {
     setBusy(true);
     setError(null);
     try {
-      const data = await generateRecommendations();
+      const data = await generateRecommendations(includeTrends && trendsAvailable);
       setPayload(data);
       setSelected(new Set(data.recommendations.map((r) => r.id)));
     } catch (e) {
@@ -61,7 +63,7 @@ export function Recommendations({ report }: { report: Report }) {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [includeTrends, trendsAvailable]);
 
   const onGenerateSite = useCallback(async () => {
     setError(null);
@@ -80,6 +82,8 @@ export function Recommendations({ report }: { report: Report }) {
       ),
     [payload],
   );
+
+  const trendsCount = recommendations.filter((r) => r.basis === "trends").length;
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -106,10 +110,29 @@ export function Recommendations({ report }: { report: Report }) {
             {payload?.available && (
               <span className="muted-note">
                 {payload.model} · {payload.recommendations.length} recommendations
+                {payload.used_trends ? " · includes trends context" : ""}
               </span>
             )}
             {busy && <span className="muted-note">Asking {`deepseek-chat`} — this takes a few seconds…</span>}
           </div>
+
+          <label className={`rec-trends${trendsAvailable ? "" : " disabled"}`}>
+            <input
+              type="checkbox"
+              checked={includeTrends && trendsAvailable}
+              disabled={!trendsAvailable || busy}
+              onChange={(e) => setIncludeTrends(e.target.checked)}
+            />
+            <span>
+              Include Google Trends to add recommendations
+              <small>
+                {trendsAvailable
+                  ? "Adds timing and focus recommendations from search-interest context. Context only — never evidence that a page or campaign performed."
+                  : "No trends export is present, so this option is unavailable. Run export_web_report.py with kbc-ing-benchmark/export/ checked out."}
+              </small>
+            </span>
+          </label>
+
           {error && <div className="scope-note" style={{ marginTop: 12 }}>{error}</div>}
         </div>
 
@@ -128,6 +151,13 @@ export function Recommendations({ report }: { report: Report }) {
               {report.scope.banks.length} banks · {report.headline.focus} scores{" "}
               {report.headline.score?.toFixed(2)} ({report.headline.verdict}).
             </div>
+            {trendsCount > 0 && (
+              <div className="muted-note" style={{ marginTop: 6 }}>
+                {trendsCount} recommendation{trendsCount === 1 ? "" : "s"} come from
+                search-interest context and {trendsCount === 1 ? "is" : "are"} marked “trends”.
+                That context shows attention, not performance.
+              </div>
+            )}
           </div>
         )}
 
@@ -268,11 +298,22 @@ function RecommendationCard({
           <span className="rec-field-k">What the data shows</span>
           <span>{rec.finding}</span>
         </div>
+        {rec.market_context && (
+          <div className="rec-field">
+            <span className="rec-field-k">Market context</span>
+            <span>{rec.market_context}</span>
+          </div>
+        )}
         <div className="rec-field">
           <span className="rec-field-k">What to do</span>
           <span>{rec.recommendation}</span>
         </div>
         <div className="rec-meta">
+          {rec.basis === "trends" && (
+            <span className="rec-basis-trends" title="From search-interest context — attention, not performance">
+              trends
+            </span>
+          )}
           {rec.features.map((f) => (
             <code key={f} className="rec-chip">{f}</code>
           ))}
