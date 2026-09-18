@@ -37,6 +37,9 @@ export function Recommendations({ report }: { report: Report }) {
       .then((data) => {
         setPayload(data);
         setSelected(new Set(data.recommendations.map((r) => r.id)));
+        // Keep the toggle in step with what was generated, so regenerating a
+        // set that already used trends does not silently drop them.
+        setIncludeTrends(Boolean(data.used_trends));
       })
       .catch((e) => setError(String(e)));
     fetchSiteStatus().then(setSite).catch(() => undefined);
@@ -58,6 +61,7 @@ export function Recommendations({ report }: { report: Report }) {
       const data = await generateRecommendations(includeTrends && trendsAvailable);
       setPayload(data);
       setSelected(new Set(data.recommendations.map((r) => r.id)));
+      setIncludeTrends(Boolean(data.used_trends));
     } catch (e) {
       setError(String(e));
     } finally {
