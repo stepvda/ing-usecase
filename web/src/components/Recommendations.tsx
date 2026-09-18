@@ -83,7 +83,14 @@ export function Recommendations({ report }: { report: Report }) {
     [payload],
   );
 
-  const trendsCount = recommendations.filter((r) => r.basis === "trends").length;
+  // Two groups, one selection. Trends recommendations are shown apart because
+  // they are argued from search-interest context, not from a measured page
+  // feature - but they are picked in the same set and built into the same site.
+  const analysisRecs = useMemo(() => recommendations.filter((r) => r.basis !== "trends"), [recommendations]);
+  const trendsRecs = useMemo(() => recommendations.filter((r) => r.basis === "trends"), [recommendations]);
+  const trendsCount = trendsRecs.length;
+  const selectedTrends = trendsRecs.filter((r) => selected.has(r.id)).length;
+  const selectedAnalysis = selected.size - selectedTrends;
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -153,9 +160,9 @@ export function Recommendations({ report }: { report: Report }) {
             </div>
             {trendsCount > 0 && (
               <div className="muted-note" style={{ marginTop: 6 }}>
-                {trendsCount} recommendation{trendsCount === 1 ? "" : "s"} come from
-                search-interest context and {trendsCount === 1 ? "is" : "are"} marked “trends”.
-                That context shows attention, not performance.
+                {trendsCount} further recommendation{trendsCount === 1 ? "" : "s"} come from
+                search-interest context and appear in their own section below. They can be
+                selected alongside the others for the website.
               </div>
             )}
           </div>
@@ -179,16 +186,49 @@ export function Recommendations({ report }: { report: Report }) {
               <span className="muted-note">Untick anything you do not want implemented.</span>
             </div>
 
-            <div className="rec-list">
-              {recommendations.map((r) => (
-                <RecommendationCard
-                  key={r.id}
-                  rec={r}
-                  checked={selected.has(r.id)}
-                  onToggle={() => toggle(r.id)}
-                />
-              ))}
-            </div>
+            {analysisRecs.length > 0 && (
+              <div className="rec-group">
+                <div className="rec-group-head">
+                  <h3>From the page analysis</h3>
+                  <span className="muted-note">
+                    Every recommendation names the measured features it was argued from.
+                  </span>
+                </div>
+                <div className="rec-list">
+                  {analysisRecs.map((r) => (
+                    <RecommendationCard
+                      key={r.id}
+                      rec={r}
+                      checked={selected.has(r.id)}
+                      onToggle={() => toggle(r.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {trendsRecs.length > 0 && (
+              <div className="rec-group rec-group-trends">
+                <div className="rec-group-head">
+                  <h3>From search-interest context</h3>
+                  <span className="muted-note">
+                    Kept apart from the analysis: these use Google Trends to suggest timing and
+                    focus, and cite no page feature as evidence. Search interest is context, never
+                    proof that a page or campaign performed — treat each as a hypothesis to test.
+                  </span>
+                </div>
+                <div className="rec-list">
+                  {trendsRecs.map((r) => (
+                    <RecommendationCard
+                      key={r.id}
+                      rec={r}
+                      checked={selected.has(r.id)}
+                      onToggle={() => toggle(r.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -199,7 +239,10 @@ export function Recommendations({ report }: { report: Report }) {
                 <div className="rec-summary-label">Build the website</div>
                 <div className="muted-note" style={{ marginTop: 4 }}>
                   Generates a ten-page ING-styled site implementing the {selected.size} selected
-                  recommendation{selected.size === 1 ? "" : "s"}.
+                  recommendation{selected.size === 1 ? "" : "s"}
+                  {selectedTrends > 0 && (
+                    <> ({selectedAnalysis} from the analysis, {selectedTrends} from trends)</>
+                  )}.
                 </div>
               </div>
               <div className="rec-build-actions">
