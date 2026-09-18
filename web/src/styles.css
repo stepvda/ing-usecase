@@ -183,6 +183,18 @@ section { margin: 40px 0; }
   margin: 20px 0 10px;
 }
 .rec-check { display: inline-flex; align-items: center; gap: 9px; font-size: 14.5px; font-weight: 600; cursor: pointer; }
+.rec-trends {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--line); font-size: 14.5px; font-weight: 600; color: var(--ink); cursor: pointer;
+}
+.rec-trends input { width: 17px; height: 17px; accent-color: var(--focus-ring); flex: none; margin-top: 1px; }
+.rec-trends span { display: grid; gap: 3px; }
+.rec-trends small { font-size: 12.5px; font-weight: 400; color: var(--ink-3); line-height: 1.45; max-width: 74ch; }
+.rec-trends.disabled { cursor: not-allowed; color: var(--ink-3); }
+.rec-basis-trends {
+  font-size: 11px; letter-spacing: .05em; text-transform: uppercase; font-weight: 700;
+  border-radius: 999px; padding: 2px 9px; background: #eaf2fd; color: #1c5cab;
+}
 .rec-list { display: grid; gap: 12px; }
 .rec-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; transition: border-color .12s; }
 .rec-card.selected { border-color: var(--focus-ring); }

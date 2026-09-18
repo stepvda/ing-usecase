@@ -205,6 +205,14 @@ pages — so it does **not** make this a performance study. The module refuses t
 emit a per-page number for exactly that reason: a per-page column would end up
 regressed against page features and called performance.
 
+The Recommendations tab keeps that line. By default it writes advice from the
+measured pages alone; ticking **Include Google Trends** adds a second, clearly
+marked set of recommendations (`basis="trends"`) drawn from the same payload,
+scoped to the product family the run measured and the last two years. Those
+recommendations are about timing and focus — when to make a change, which page to
+prioritise — and the prompt forbids them from citing a page feature as evidence.
+The trends digest never carries a per-page number either.
+
 **One `.env` mechanism.** `scripts/_bootstrap.py` now uses `python-dotenv`
 (Siegried's dependency) instead of the hand-rolled parser it started with.
 
