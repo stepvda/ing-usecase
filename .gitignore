@@ -31,3 +31,11 @@ data/fixtures/
 # web UI build artefacts
 web/node_modules/
 web/dist/
+
+# steph 18/09: Dan's Google Trends benchmark is a separate project with its own
+# source and data (app.py, collectors/, 141 CSVs). We consume its export/ folder
+# at src/comparator/trends.py:DEFAULT_EXPORT_DIR, which already degrades to
+# nothing when it is absent, so check it out rather than vendoring 7.7 MB of
+# another repo's code and third-party data into this one. The derived
+# web/public/trends.json is committed, so the UI works without it.
+kbc-ing-benchmark/
