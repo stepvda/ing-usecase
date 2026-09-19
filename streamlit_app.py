@@ -32,8 +32,11 @@ st.set_page_config(page_title="Banking Campaigns Comparator", layout="wide")
 # ── helpers ──────────────────────────────────────────────────────────────
 
 @st.cache_data
-def load_campaigns() -> pd.DataFrame:
-    return pd.read_csv(DATA / "campaigns.csv")
+def load_campaigns() -> pd.DataFrame | None:
+    p = DATA / "campaigns.csv"
+    if p.is_file():
+        return pd.read_csv(p)
+    return None
 
 
 @st.cache_data
@@ -71,38 +74,42 @@ def img_path(bank: str, page_id: str) -> Path:
 
 # ── page 1: Accueil ──────────────────────────────────────────────────────
 
-def page_accueil(df: pd.DataFrame, profiles: dict) -> None:
+def page_accueil(df: pd.DataFrame | None, profiles: dict) -> None:
     st.title("🏦 Banking Campaigns Comparator")
     st.caption(
-        "Comment les banques belges communiquent sur les mêmes produits, "
-        "et ce qu'ING peut en apprendre. POC ING DACI / Customer AI."
+        "How Belgian banks communicate about the same products, "
+        "and what ING can learn from them. ING DACI / Customer AI POC."
     )
+
+    if df is None:
+        st.warning("No campaign data available. Run analysis first.")
+        df = pd.DataFrame()
 
     scope = profiles.get("_scope", {})
     profs = profiles.get("profiles", {})
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Banques avec captures", len(df["bank"].unique()))
-    col2.metric("Pages collectées", len(df))
-    col3.metric("Features mesurées", len(df.columns))
-    col4.metric("Banques en scope", len(scope.get("banks_included", [])))
+    col1.metric("Banks with captures", len(df["bank"].unique()))
+    col2.metric("Pages collected", len(df))
+    col3.metric("Features measured", len(df.columns))
+    col4.metric("Banks in scope", len(scope.get("banks_included", [])))
 
     st.divider()
 
-    st.subheader("État du projet")
+    st.subheader("Project status")
     st.info(
-        "Day 5/10 — weekend avant Day 6 gate (lun 21 sep). "
-        "La chaîne d'analyse fonctionne end-to-end sur les captures réelles. "
-        "Les 13 features de la grille rubric sont en cours de scoring."
+        "Day 5/10 — weekend before Day 6 gate (Mon 21 Sep). "
+        "The analysis pipeline works end-to-end on real captures. "
+        "The 13 rubric features are being scored."
     )
 
-    st.subheader("Banques — statut de collecte")
+    st.subheader("Banks — collection status")
     banks = df.drop_duplicates("bank").sort_values("bank")
     for _, b in banks.iterrows():
         bank = b["bank"]
         in_scope = bank in scope.get("banks_included", [])
         excluded = bank in scope.get("banks_excluded_no_page_in_family", [])
-        status = "✅ En scope" if in_scope else ("⛔ Hors scope (pas de page dans la famille)" if excluded else "⚠️ Capturé, hors scope actuel")
+        status = "✅ In scope" if in_scope else ("⛔ Out of scope (no page in family)" if excluded else "⚠️ Captured, currently out of scope")
         st.markdown(f"- **{bank}** ({b.get('bank_category', 'N/A')}) — {status}")
 
     if scope.get("banks_excluded_no_page_in_family"):
@@ -113,10 +120,10 @@ def page_accueil(df: pd.DataFrame, profiles: dict) -> None:
         )
 
     st.divider()
-    st.subheader("Livrables disponibles")
+    st.subheader("Available deliverables")
     for f in sorted(OUTPUTS.iterdir()):
         if f.is_file() and f.suffix in (".png", ".csv", ".json", ".md"):
-            st.file_downloader(
+            st.download_button(
                 label=f"📄 {f.name}",
                 data=f.read_bytes(),
                 file_name=f.name,
@@ -125,11 +132,15 @@ def page_accueil(df: pd.DataFrame, profiles: dict) -> None:
 
 # ── page 2: Analyse ──────────────────────────────────────────────────────
 
-def page_analyse(df: pd.DataFrame) -> None:
-    st.title("📊 Analyse")
+def page_analyse(df: pd.DataFrame | None) -> None:
+    st.title("📊 Analysis")
+
+    if df is None:
+        st.warning("No campaign data available. Run analysis first.")
+        return
 
     tab1, tab2, tab3, tab4 = st.tabs(
-        ["Positioning", "ING vs pairs", "Séparation", "Similarité"]
+        ["Positioning", "ING vs pairs", "Separation", "Similarity"]
     )
 
     with tab1:
@@ -145,7 +156,7 @@ def page_analyse(df: pd.DataFrame) -> None:
         st.caption("Source: outputs/01_positioning.png & charts.md")
 
     with tab2:
-        st.subheader("ING vs pairs — plus grandes différences")
+        st.subheader("ING vs pairs — largest differences")
         st.caption("Gap in peer standard deviations. Right = above peer mean.")
         gap_data = {
             "Feature": [
@@ -163,7 +174,7 @@ def page_analyse(df: pd.DataFrame) -> None:
         st.caption("Source: outputs/02_ing_vs_peers.png & charts.md")
 
     with tab3:
-        st.subheader("Traditional vs challenger — qui se sépare le plus ?")
+        st.subheader("Traditional vs challenger — which separates the most?")
         st.caption("Cohen's d. Right = higher at challengers, left = higher at traditional.")
         sep_data = {
             "Feature": [
@@ -181,7 +192,7 @@ def page_analyse(df: pd.DataFrame) -> None:
         st.caption("Source: outputs/03_category_separation.png & charts.md")
 
     with tab4:
-        st.subheader("Similarité entre banques")
+        st.subheader("Similarity between banks")
         st.caption("Euclidean distance in standardised feature space. Light = similar, dark = far.")
         dist_data = {
             "": ["argenta", "crelan", "kbc", "ing", "revolut", "n26", "bunq"],
@@ -222,14 +233,14 @@ def page_analyse(df: pd.DataFrame) -> None:
 
 # ── page 3: Profils ──────────────────────────────────────────────────────
 
-def page_profils(profiles: dict) -> None:
-    st.title("🏷️ Profils banque")
+def page_profils(df: pd.DataFrame | None, profiles: dict) -> None:
+    st.title("🏷️ Bank profiles")
     profs = profiles.get("profiles", {})
     if not profs:
         st.warning("No profiles found. Run `scripts/run_analysis.py` first.")
         return
 
-    selected = st.selectbox("Choisir une banque", sorted(profs.keys()))
+    selected = st.selectbox("Choose a bank", sorted(profs.keys()))
     p = profs[selected]
 
     col1, col2 = st.columns(2)
@@ -309,7 +320,7 @@ def page_rubric() -> None:
         "for computed Cohen's kappa and percentage agreement."
     )
 
-    st.subheader("Scoring guide — features à scorer")
+    st.subheader("Scoring guide — features to score")
     fd = load_dictionary()
     features = fd.get("features", [])
     rubric_features = [f for f in features if f.get("extraction") == "rubric"]
@@ -322,13 +333,17 @@ def page_rubric() -> None:
 
 # ── page 5: Données ──────────────────────────────────────────────────────
 
-def page_donnees(df: pd.DataFrame) -> None:
-    st.title("🗄️ Données")
+def page_data(df: pd.DataFrame | None) -> None:
+    st.title("🗄️ Data")
 
-    tab1, tab2 = st.tabs(["Dataset", "Dictionnaire"])
+    if df is None:
+        st.warning("No campaign data available. Run analysis first.")
+        return
+
+    tab1, tab2 = st.tabs(["Dataset", "Dictionary"])
 
     with tab1:
-        st.subheader(f"campaigns.csv — {df.shape[0]} pages × {df.shape[1]} colonnes")
+        st.subheader(f"campaigns.csv — {df.shape[0]} pages × {df.shape[1]} columns")
         st.caption(
             "Each row = one campaign page. 104 columns per the feature dictionary. "
             "Gitignored, regenerated from raw captures."
@@ -336,15 +351,15 @@ def page_donnees(df: pd.DataFrame) -> None:
         col1, col2 = st.columns(2)
         with col1:
             banks = df["bank"].unique()
-            st.multiselect("Filtrer par banque", list(banks), default=list(banks))
+            st.multiselect("Filter by bank", list(banks), default=list(banks))
         with col2:
             families = df["product_family"].unique()
-            st.multiselect("Filtrer par famille", list(families), default=list(families))
+            st.multiselect("Filter by family", list(families), default=list(families))
 
         st.dataframe(df, use_container_width=True, height=400)
 
         csv = df.to_csv(index=False).encode("utf-8")
-        st.file_downloader("Télécharger CSV", data=csv, file_name="campaigns.csv")
+        st.download_button("Download CSV", data=csv, file_name="campaigns.csv")
 
     with tab2:
         st.subheader("Feature dictionary — 101 features")
@@ -382,32 +397,36 @@ def page_limitations() -> None:
 
 # ── page 7: Collection ───────────────────────────────────────────────────
 
-def page_collection(df: pd.DataFrame) -> None:
+def page_collection(df: pd.DataFrame | None) -> None:
     st.title("🕷️ Collection")
 
-    st.subheader("Statut par banque")
+    if df is None:
+        st.warning("No campaign data available. Run analysis first.")
+        return
+
+    st.subheader("Status per bank")
     col1, col2, col3, col4, col5, col6 = st.columns(6)
-    col1.metric("Banques", df["bank"].nunique())
+    col1.metric("Banks", df["bank"].nunique())
     col2.metric("Pages", len(df))
-    col3.metric("Robots autorisés", int(df["robots_allowed"].sum()) if "robots_allowed" in df.columns else "N/A")
-    col4.metric("Qualité ok", int((df["capture_quality"] == "ok").sum()) if "capture_quality" in df.columns else "N/A")
-    col5.metric("Captures manuelles", int((df["collection_method"] == "manual_capture").sum()) if "collection_method" in df.columns else "N/A")
-    col6.metric("Langues", ", ".join(sorted(df["language"].unique())))
+    col3.metric("Robots allowed", int(df["robots_allowed"].sum()) if "robots_allowed" in df.columns else "N/A")
+    col4.metric("Quality ok", int((df["capture_quality"] == "ok").sum()) if "capture_quality" in df.columns else "N/A")
+    col5.metric("Manual captures", int((df["collection_method"] == "manual_capture").sum()) if "collection_method" in df.columns else "N/A")
+    col6.metric("Languages", ", ".join(sorted(df["language"].unique())))
 
     st.divider()
-    st.subheader("Pages détaillées")
+    st.subheader("Detailed pages")
     cols = ["page_id", "bank", "product_family", "language", "collection_method", "capture_quality", "data_source"]
     available = [c for c in cols if c in df.columns]
     st.dataframe(df[available], use_container_width=True)
 
     st.divider()
-    st.subheader("Pipeline de collecte")
+    st.subheader("Collection pipeline")
     st.markdown("""
-    **Commandes :**
+    **Commands:**
     - `python3 scripts/run_collection.py --config scripts/collection_targets.yaml --method headless`
     - `python3 scripts/import_captures.py --dir <folder> --merge-with data/processed/campaigns.csv`
     """)
-    st.caption("Compliance: assert_can_fetch() vérifie robots.txt avant chaque fetch (fail closed).")
+    st.caption("Compliance: assert_can_fetch() checks robots.txt before each fetch (fail closed).")
 
 
 # ── page 8: Trends ───────────────────────────────────────────────────────
@@ -419,16 +438,16 @@ def page_trends() -> None:
         "Separate pipeline in `kbc-ing-benchmark/` (Streamlit + pytrends)."
     )
 
-    st.subheader("Dashboard dédié")
+    st.subheader("Dedicated dashboard")
     st.markdown("""
-    Le pipeline Trends a son propre app Streamlit :
+    The Trends pipeline has its own Streamlit app:
     `cd kbc-ing-benchmark && streamlit run app.py`
     """)
 
-    st.subheader("Ce que contient le repo")
+    st.subheader("What's in the repo")
     if (KBCH / "export").is_dir():
         for f in sorted((KBCH / "export").glob("*.md")):
-            st.file_downloader(
+            st.download_button(
                 f"📄 {f.name}",
                 data=f.read_bytes(),
                 file_name=f.name,
@@ -443,10 +462,10 @@ def main() -> None:
     st.sidebar.title("Navigation")
     pages = {
         "🏠 Accueil": page_accueil,
-        "📊 Analyse": page_analyse,
-        "🏷️ Profils": page_profils,
+        "📊 Analysis": page_analyse,
+        "🏷️ Bank profiles": page_profils,
         "📝 Rubric": page_rubric,
-        "🗄️ Données": page_donnees,
+        "🗄️ Data": page_data,
         "⚠️ Limitations": page_limitations,
         "🕷️ Collection": page_collection,
         "📈 Trends": page_trends,
@@ -459,9 +478,21 @@ def main() -> None:
     df = load_campaigns()
     profiles = load_profiles()
 
-    if choice in ("📊 Analyse", "🗄️ Données", "🕷️ Collection"):
+    if df is None:
+        st.warning(
+            "`data/processed/campaigns.csv` is not available (gitignored, "
+            "regenerated from raw captures). Run `python3 scripts/run_analysis.py` "
+            "to regenerate, or import captures with `python3 scripts/import_captures.py`."
+        )
+
+    needs_df = choice in ("📊 Analysis", "🗄️ Data", "🕷️ Collection")
+    needs_profiles = choice in ("🏠 Accueil", "🏷️ Bank profiles")
+
+    if needs_df and needs_profiles:
+        pages[choice](df, profiles)
+    elif needs_df:
         pages[choice](df)
-    elif choice in ("🏠 Accueil", "🏷️ Profils"):
+    elif needs_profiles:
         pages[choice](df, profiles)
     else:
         pages[choice]()
