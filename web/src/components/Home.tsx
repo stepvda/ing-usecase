@@ -29,6 +29,12 @@ export function Home({ report, operations }: { report: Report; operations: Opera
           We have no internal data. Nothing here claims a design choice caused a commercial
           outcome — every recommendation is an argued hypothesis worth testing.
         </p>
+        <p style={{ marginTop: 8 }}>
+          The comparison runs on <strong>{scope.product_family_label.toLowerCase()}</strong> only.
+          The other product families are collected and scored, but never compared against these:
+          a mortgage page and a current-account page do different jobs, so a difference between
+          them would measure the product rather than the communication.
+        </p>
       </div>
 
       <div className="metrics">
