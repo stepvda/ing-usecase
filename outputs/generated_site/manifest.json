@@ -8,10 +8,15 @@
     {
       "slug": "index",
       "nav": "Home",
-      "title": "Save with ING",
+      "title": "Savings at ING | The rate is the whole offer",
       "file": "index.html",
-      "used_fallback": true,
-      "recommendations_implemented": []
+      "used_fallback": false,
+      "recommendations_implemented": [
+        "R1",
+        "R3",
+        "R4",
+        "R8"
+      ]
     },
     {
       "slug": "comptes-epargne",
@@ -20,19 +25,18 @@
       "file": "comptes-epargne.html",
       "used_fallback": false,
       "recommendations_implemented": [
-        "R3",
-        "R8"
+        "R2",
+        "R6"
       ]
     },
     {
       "slug": "compte-a-terme",
       "nav": "Term account",
-      "title": "Term account: a fixed rate for the term you choose | ING",
+      "title": "Term account | ING Belgium",
       "file": "compte-a-terme.html",
       "used_fallback": false,
       "recommendations_implemented": [
-        "R3",
-        "R8"
+        "R6"
       ]
     },
     {
@@ -45,21 +49,20 @@
         "R1",
         "R2",
         "R3",
-        "R4",
         "R5",
-        "R6",
-        "R8",
+        "R9",
         "R10"
       ]
     },
     {
       "slug": "jeunes",
       "nav": "Youth",
-      "title": "Youth account: a first account for your child | ING Belgium",
+      "title": "Youth account for your child | ING",
       "file": "jeunes.html",
       "used_fallback": false,
       "recommendations_implemented": [
-        "R1",
+        "R2",
+        "R4",
         "R5",
         "R8"
       ]
@@ -67,24 +70,24 @@
     {
       "slug": "investir",
       "nav": "Invest",
-      "title": "Invest | ING Belgium",
+      "title": "Investing for the first time | ING Belgium",
       "file": "investir.html",
       "used_fallback": false,
       "recommendations_implemented": [
-        "R2",
-        "R3",
-        "R8"
+        "R4",
+        "R6"
       ]
     },
     {
       "slug": "credit-hypothecaire",
       "nav": "Mortgage",
-      "title": "Mortgage: rate, total cost and an appointment | ING Belgium",
+      "title": "Mortgage | ING Belgium",
       "file": "credit-hypothecaire.html",
       "used_fallback": false,
       "recommendations_implemented": [
+        "R1",
         "R3",
-        "R8"
+        "R7"
       ]
     },
     {
@@ -96,10 +99,8 @@
       "recommendations_implemented": [
         "R1",
         "R2",
-        "R3",
         "R4",
-        "R6",
-        "R7",
+        "R5",
         "R8",
         "R9",
         "R10"
@@ -108,11 +109,12 @@
     {
       "slug": "pourquoi-ing",
       "nav": "Why ING",
-      "title": "Why ING | ING Belgium",
+      "title": "Why ING: banking that stays close | ING Belgium",
       "file": "pourquoi-ing.html",
       "used_fallback": false,
       "recommendations_implemented": [
-        "R4",
+        "R3",
+        "R7",
         "R9"
       ]
     },
@@ -123,60 +125,60 @@
       "file": "contact.html",
       "used_fallback": false,
       "recommendations_implemented": [
-        "R10"
+        "R7"
       ]
     }
   ],
   "recommendations": [
     {
       "id": "R1",
-      "title": "Cut deadline and urgency language",
+      "title": "Strip back urgency and deadline language",
       "priority": "high"
     },
     {
       "id": "R2",
-      "title": "Stop stacking persuasion techniques",
+      "title": "Make the conditions of a 'free' account explicit where the claim is made",
       "priority": "high"
     },
     {
       "id": "R3",
-      "title": "Put the conditions next to the \"free\" claim",
+      "title": "Shorten the opening screen, not just the page",
       "priority": "high"
     },
     {
       "id": "R4",
-      "title": "Shorten the campaign pages",
+      "title": "Reduce the number of persuasion techniques stacked per page",
       "priority": "medium"
     },
     {
       "id": "R5",
-      "title": "Consolidate images into fewer, larger visuals",
+      "title": "Substantiate the fast sign-up promise",
       "priority": "medium"
     },
     {
       "id": "R6",
-      "title": "Make the fast sign-up promise concrete",
+      "title": "Put a concrete rate or price in the offer block",
       "priority": "medium"
     },
     {
       "id": "R7",
-      "title": "Test a less bright opening treatment",
+      "title": "Replace question-style headings with statements",
       "priority": "low"
     },
     {
       "id": "R8",
-      "title": "Protect the plain offer statement while rewriting",
-      "priority": "medium"
+      "title": "Hold the light, mobile-first rendering while trimming",
+      "priority": "low"
     },
     {
       "id": "R9",
-      "title": "Match digital claims to what the press is actually covering",
+      "title": "Only claim digital leadership the news cycle supports",
       "priority": "medium"
     },
     {
       "id": "R10",
-      "title": "Keep urgency framing away from payment and security copy",
-      "priority": "low"
+      "title": "Keep urgent deadline copy away from the payments-access context",
+      "priority": "medium"
     }
   ],
   "asset_warnings": []
