@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-25T05:52:50+00:00",
+  "generated_at": "2026-09-25T08:49:52+00:00",
   "dataset": "data/processed/campaigns_scored.csv",
   "scope": {
     "product_family": "current_account_pack",
@@ -313,18 +313,18 @@
       "higherAt": "traditional"
     },
     {
-      "feature": "subscription_style_framing",
-      "label": "Subscription style framing",
-      "extraction": "model_assisted",
+      "feature": "rate_shown",
+      "label": "Shows a rate",
+      "extraction": "automatic",
       "traditional": 0.0,
       "challenger": 0.5,
       "effect": 2.0,
       "higherAt": "challenger"
     },
     {
-      "feature": "rate_shown",
-      "label": "Shows a rate",
-      "extraction": "automatic",
+      "feature": "subscription_style_framing",
+      "label": "Subscription style framing",
+      "extraction": "model_assisted",
       "traditional": 0.0,
       "challenger": 0.5,
       "effect": 2.0,
@@ -376,8 +376,8 @@
       "higherAt": "traditional"
     },
     {
-      "feature": "first_time_investor_targeting",
-      "label": "Targets first-time investors",
+      "feature": "institutional_trust_signal_present",
+      "label": "Invokes institutional trust",
       "extraction": "model_assisted",
       "traditional": 0.0,
       "challenger": 0.25,
@@ -1369,12 +1369,12 @@
           "direction": "above"
         },
         {
-          "label": "Subscription style framing",
+          "label": "Shows a rate",
           "sd": 2.4,
           "direction": "above"
         },
         {
-          "label": "Shows a rate",
+          "label": "Subscription style framing",
           "sd": 2.4,
           "direction": "above"
         }

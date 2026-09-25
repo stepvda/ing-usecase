@@ -108,8 +108,8 @@ The two groups do not overlap: the most challenger-like incumbent sits at 0.41 a
 | --- | --- | --- | --- |
 | background_luminance | 0.43 | 0.17 | -2.36 |
 | above_fold_element_count | 36.57 | 21.50 | -2.12 |
-| subscription_style_framing | 0.00 | 0.50 | 2.00 |
 | rate_shown | 0.00 | 0.50 | 2.00 |
+| subscription_style_framing | 0.00 | 0.50 | 2.00 |
 | total_image_area_ratio | 0.10 | 0.31 | 1.99 |
 | hero_image_area_ratio | 0.25 | 0.62 | 1.49 |
 | question_count | 20.71 | 5.75 | -1.44 |

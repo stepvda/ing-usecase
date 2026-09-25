@@ -481,7 +481,7 @@
 | lever count | 4 |
 | personas | mass_market 100%, family 100%, entrepreneur_self_employed 100%, expat 100% |
 
-**Signature:** institutional trust signal present well above the market average (+3.6 SD); subscription style framing well above the market average (+2.4 SD); rate shown well above the market average (+2.4 SD).
+**Signature:** institutional trust signal present well above the market average (+3.6 SD); rate shown well above the market average (+2.4 SD); subscription style framing well above the market average (+2.4 SD).
 
 ### vdk  (traditional)
 
