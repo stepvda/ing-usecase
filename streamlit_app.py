@@ -26,7 +26,8 @@ REPO = Path(__file__).resolve().parent
 # needs a top-level entry point), so `comparator` isn't importable without
 # putting src/ on the path first - same technique as scripts/_bootstrap.py.
 sys.path.insert(0, str(REPO / "src"))
-from comparator import research  # noqa: E402
+from comparator import analysis, research, schema  # noqa: E402
+from comparator.dictionary import load_dictionary as load_feature_dictionary  # noqa: E402
 
 # The Research page reads SEMANTIC_SCHOLAR_API_KEY via os.getenv()
 # inside research.search_papers() - without this, a real local .env key was
@@ -48,10 +49,46 @@ st.set_page_config(page_title="Banking Campaigns Comparator", layout="wide")
 
 @st.cache_data
 def load_campaigns() -> pd.DataFrame | None:
-    p = DATA / "campaigns.csv"
-    if p.is_file():
-        return pd.read_csv(p)
+    """The rubric-merged dataset, falling back to the unscored one.
+
+    campaigns_scored.csv is what run_analysis.py and export_web_report.py read:
+    it carries the 13 judged features that campaigns.csv does not. Reading the
+    unscored file here meant every rubric-derived figure was silently absent
+    from this dashboard while the React UI showed it - the same two-derived-
+    files hazard decisions.md records for the web export on 20/09.
+    """
+    for name in ("campaigns_scored.csv", "campaigns.csv"):
+        p = DATA / name
+        if p.is_file():
+            return pd.read_csv(p)
     return None
+
+
+def features_compared(df: pd.DataFrame | None, family: str | None) -> tuple[int, int] | None:
+    """(declared, actually compared), read from analysis.feature_accounting().
+
+    Deliberately not recomputed here. feature_accounting() is where this project
+    decides which features survive into a comparison - provenance, withdrawn,
+    bands redundant with their raw value, language- and capture-window-excluded,
+    missing for some bank - and outputs/charts.md prints the same two numbers
+    from the same call. A second definition living in the dashboard is exactly
+    how two surfaces start quoting different figures for the same run.
+
+    Scoped to one product family, like the comparison itself (DR-04). Pooled
+    across all six families the count is 36; every other artefact quotes the
+    scoped 33, so the dashboard quotes it too.
+
+    This replaced len(df.columns), which read 89: the width of the unscored CSV,
+    provenance columns included, and no relation to what was compared.
+    """
+    if df is None:
+        return None
+    fd = load_feature_dictionary()
+    typed = schema.coerce_types(df, fd)
+    if family:
+        typed, _scope = analysis.scope_to_family(typed, family)
+    accounting = analysis.feature_accounting(typed, fd)
+    return accounting["dictionary_total"], accounting["n_used"]
 
 
 @st.cache_data
@@ -123,13 +160,23 @@ def page_accueil(df: pd.DataFrame | None, profiles: dict) -> None:
     # "bank" column, so that raised KeyError and took the whole page down.
     # Every metric/loop below now degrades to "N/A" instead of crashing.
     if df is None:
-        st.warning("No campaign data available (`data/processed/campaigns.csv` is gitignored - "
-                    "run `python3 scripts/run_analysis.py` locally to regenerate it).")
+        st.warning("No campaign data available - expected `data/processed/campaigns_scored.csv` "
+                   "(or `campaigns.csv`). Both are tracked, so this usually means the working "
+                   "tree is incomplete; see docs/pipeline.md to regenerate them.")
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Banks with captures", df["bank"].nunique() if df is not None else "N/A")
     col2.metric("Pages collected", len(df) if df is not None else "N/A")
-    col3.metric("Features measured", len(df.columns) if df is not None else "N/A")
+    counts = features_compared(df, scope.get("product_family"))
+    col3.metric(
+        "Features compared",
+        counts[1] if counts else "N/A",
+        help=(
+            f"of {counts[0]} declared in the dictionary. The rest are provenance, "
+            "withdrawn, redundant with a band, excluded for mixing languages or "
+            "capture dates, or missing for at least one bank - see Limitations."
+        ) if counts else None,
+    )
     col4.metric("Banks in scope", len(scope.get("banks_included", [])))
 
     st.divider()
