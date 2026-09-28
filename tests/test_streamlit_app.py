@@ -6,6 +6,8 @@ does for pytrends.
 """
 from __future__ import annotations
 
+import inspect
+import re
 import sys
 from pathlib import Path
 
@@ -92,3 +94,33 @@ def test_load_campaigns_returns_none_when_there_is_nothing(tmp_path, monkeypatch
     streamlit_app.load_campaigns.clear()
 
     assert streamlit_app.load_campaigns() is None
+
+
+def _react_tabs() -> list[str]:
+    """The React tab labels, read from web/src/App.tsx's TABS literal."""
+    src = (ROOT / "web" / "src" / "App.tsx").read_text(encoding="utf-8")
+    block = src.split("const TABS", 1)[1].split("];", 1)[0]
+    return re.findall(r'\[\s*"[a-z]+"\s*,\s*"([^"]+)"\s*\]', block)
+
+
+def _streamlit_pages() -> list[str]:
+    """The sidebar labels, read from main()'s pages dict."""
+    src = inspect.getsource(streamlit_app.main)
+    return [re.sub(r"^[^\w]+", "", label) for label in re.findall(r'"([^"]+)": page_', src)]
+
+
+def test_every_react_tab_has_a_streamlit_page():
+    """The two surfaces are one product and must not drift apart.
+
+    Reputation and Recommendations existed only in React, so the dashboard
+    silently showed a smaller project than the web UI did.
+    """
+    missing = [t for t in _react_tabs() if t not in _streamlit_pages()]
+    assert not missing, f"React tabs with no Streamlit page: {missing}"
+
+
+def test_the_shared_tabs_are_in_the_same_order():
+    """Same labels in a different order still reads as two different products."""
+    react = _react_tabs()
+    shared = [p for p in _streamlit_pages() if p in react]
+    assert shared == [t for t in react if t in shared]

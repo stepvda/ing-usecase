@@ -144,6 +144,17 @@ def load_output_csv(name: str, **kwargs) -> pd.DataFrame | None:
         return None
 
 
+@st.cache_data
+def load_json_output(name: str) -> dict | None:
+    p = OUTPUTS / name
+    if not p.is_file():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 # ── page 1: Home ──────────────────────────────────────────────────────
 
 def page_accueil(df: pd.DataFrame | None, profiles: dict) -> None:
@@ -182,11 +193,17 @@ def page_accueil(df: pd.DataFrame | None, profiles: dict) -> None:
     st.divider()
 
     st.subheader("Project status")
-    st.info(
-        "The pipeline runs end to end on real captures: 51 pages across 14 banks "
-        "and 6 product families, 104 features, one judged rubric sheet complete. "
-        "Comparisons run within one product family at a time."
-    )
+    # Counted, not written in. This sentence said "51 pages across 14 banks and
+    # 6 product families, 104 features" as a literal, which is a claim that goes
+    # stale the next time anything is collected.
+    if df is not None:
+        declared = len(load_dictionary().get("features", []))
+        st.info(
+            f"The pipeline runs end to end on real captures: {len(df)} pages across "
+            f"{df['bank'].nunique()} banks and {df['product_family'].nunique()} product "
+            f"families, {declared} features, one judged rubric sheet. "
+            "Comparisons run within one product family at a time."
+        )
 
     if df is not None:
         st.subheader("Banks — collection status")
@@ -497,6 +514,96 @@ def page_collection(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: A
     st.caption("Compliance: assert_can_fetch() checks robots.txt before each fetch (fail closed).")
 
 
+# ── page: Reputation ─────────────────────────────────────────────────────
+
+def page_reputation(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: ARG001 - uniform page signature, see main()
+    st.title("📰 Reputation")
+    st.caption(
+        "What each bank is in the news ABOUT, over the last 90 days of Belgian "
+        "coverage. Themes, never sentiment: how positively a bank is covered is "
+        "a different and harder claim this project does not make."
+    )
+
+    data = load_json_output("reputation.json")
+    if data is None:
+        st.warning("`outputs/reputation.json` not found - run `python3 scripts/run_analysis.py`.")
+        return
+    if not data.get("available"):
+        st.info("No news API key configured, so no headlines were fetched.")
+        return
+
+    banks = data.get("banks") or {}
+    if not banks:
+        st.info("A key is configured but no headlines came back.")
+        return
+
+    # available: true means a key is configured, not that articles were
+    # returned (docs/pipeline.md) - a bank at 0 may be quiet or may be a failed
+    # request, and the two must not read the same.
+    st.caption(
+        "A headline count of 0 means nothing matched in the window - it is not "
+        "evidence that a bank is absent from the news."
+    )
+
+    themes = sorted({t for b in banks.values() for t in (b.get("themes") or {})})
+    rows = [
+        {"Bank": name, "Headlines": b.get("headline_count", 0),
+         **{t.replace("_", " ").capitalize(): (b.get("themes") or {}).get(t, 0) for t in themes}}
+        for name, b in sorted(banks.items())
+    ]
+    st.dataframe(pd.DataFrame(rows).set_index("Bank"), use_container_width=True)
+
+    chosen = st.selectbox("Headlines for", sorted(banks))
+    for theme, items in (banks[chosen].get("theme_headlines") or {}).items():
+        if items:
+            st.markdown(f"**{theme.replace('_', ' ').capitalize()}**")
+            for h in items:
+                title = h.get("title", "")
+                url = h.get("url")
+                st.markdown(f"- [{title}]({url})" if url else f"- {title}")
+
+
+# ── page: Recommendations ────────────────────────────────────────────────
+
+def page_recommendations(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: ARG001 - uniform page signature, see main()
+    st.title("💡 Recommendations")
+    st.caption(
+        "Changes ING could test, each argued from a measured feature. Read-only "
+        "here: generating them is the React UI's job, this page shows the last run."
+    )
+
+    data = load_json_output("web_recommendations.json")
+    if data is None:
+        st.warning(
+            "`outputs/web_recommendations.json` not found - it is written by "
+            "`scripts/serve_web.py` when recommendations are generated."
+        )
+        return
+
+    st.caption(
+        f"Generated {data.get('generated_at', 'unknown')} by {data.get('model', 'unknown')}. "
+        "No performance data exists in this project, so every item is a hypothesis "
+        "to test, never a demonstrated improvement."
+    )
+    if data.get("summary"):
+        st.info(data["summary"])
+
+    for r in data.get("recommendations", []):
+        with st.expander(f"{r.get('id', '?')} — {r.get('title', '')}  ·  {r.get('priority', '')}"):
+            if r.get("finding"):
+                st.markdown(f"**Finding.** {r['finding']}")
+            if r.get("recommendation"):
+                st.markdown(f"**Recommendation.** {r['recommendation']}")
+            feats = r.get("features") or []
+            # A reputation-basis item carries no features by design: news themes
+            # are context, and citing a page feature as their evidence would be
+            # the causal claim this project refuses.
+            st.caption(
+                "Measured features: " + ", ".join(feats) if feats
+                else f"No page feature cited (basis: {r.get('basis', 'unknown')})."
+            )
+
+
 # ── page 8: Trends ───────────────────────────────────────────────────────
 
 def page_trends(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: ARG001 - uniform page signature, see main()
@@ -577,15 +684,21 @@ def main() -> None:
     # need to know which pages care.
     st.sidebar.title("Navigation")
     pages = {
+        # Same order as the React UI's TABS (web/src/App.tsx), so the two
+        # surfaces read as one product. Limitations has no React tab of its own
+        # - it is a section of the Analysis tab there - and is kept last here
+        # rather than dropped, because it is deliverable D-09.
         "🏠 Home": page_accueil,
         "📊 Analysis": page_analyse,
         "🏷️ Bank profiles": page_profils,
-        "📝 Rubric": page_rubric,
         "🗄️ Data": page_data,
-        "⚠️ Limitations": page_limitations,
+        "📝 Rubric": page_rubric,
         "🕷️ Collection": page_collection,
         "📈 Trends": page_trends,
+        "📰 Reputation": page_reputation,
+        "💡 Recommendations": page_recommendations,
         "📚 Research": page_research,
+        "⚠️ Limitations": page_limitations,
     }
     choice = st.sidebar.radio("Pages", list(pages.keys()))
 
