@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m pytest tests/ -q 2>&1 | tail -1 | { read -r line; case \"$line\" in *failed*|*error*) printf '{\"systemMessage\":\"pytest: %s\"}\\n' \"$line\";; esac; } || true",
+            "timeout": 180,
+            "async": true,
+            "statusMessage": "Running the test suite"
+          }
+        ]
+      }
+    ]
+  }
+}
