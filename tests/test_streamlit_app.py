@@ -124,3 +124,39 @@ def test_the_shared_tabs_are_in_the_same_order():
     react = _react_tabs()
     shared = [p for p in _streamlit_pages() if p in react]
     assert shared == [t for t in react if t in shared]
+
+
+def test_a_null_reputation_bank_does_not_take_the_page_down():
+    """Regression: bank_snapshot() writes null for a bank it could not fetch or
+    classify, and b.get("themes") on that null raised AttributeError - the
+    Reputation page crashed on bunq, cbc, keytrade and n26."""
+    banks = {
+        "ing": {"headline_count": 2, "themes": {"regulatory": 1, "other": 1}},
+        "n26": None,
+    }
+    table = streamlit_app.reputation_table(banks)
+    assert list(table.index) == ["ing", "n26"]
+    assert table.loc["ing", "Headlines"] == 2
+    assert table.loc["ing", "Regulatory"] == 1
+
+
+def test_a_null_reputation_bank_reads_empty_not_zero():
+    """0 means the query ran and matched nothing; a null means there is no
+    result. Filling the null row with zeros would make the two look the same."""
+    table = streamlit_app.reputation_table({"ing": {"headline_count": 0, "themes": {"other": 0}}, "n26": None})
+    assert table.loc["ing"].tolist() == [0, 0]
+    assert table.loc["n26"].isna().all()
+
+
+def test_every_reputation_bank_null_still_builds_a_table():
+    table = streamlit_app.reputation_table({"bunq": None, "n26": None})
+    assert table["Headlines"].isna().all()
+
+
+def test_the_real_reputation_snapshot_builds_a_table():
+    """The committed outputs/reputation.json is what the deployed app reads."""
+    data = streamlit_app.load_json_output("reputation.json")
+    if not data or not data.get("banks"):
+        pytest.skip("no reputation snapshot in the working tree")
+    table = streamlit_app.reputation_table(data["banks"])
+    assert len(table) == len(data["banks"])
