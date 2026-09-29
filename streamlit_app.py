@@ -516,6 +516,28 @@ def page_collection(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: A
 
 # ── page: Reputation ─────────────────────────────────────────────────────
 
+def reputation_table(banks: dict) -> pd.DataFrame:
+    """One row per bank: headline count, then one count per news theme.
+
+    A bank can be null in reputation.json - bank_snapshot() returns None when
+    nothing could be fetched or classified. That row stays empty, never zero:
+    0 means the query ran and matched nothing, an empty cell means there is no
+    result to read, and the two must not look the same.
+    """
+    themes = sorted({t for b in banks.values() if b for t in (b.get("themes") or {})})
+    labels = {t: t.replace("_", " ").capitalize() for t in themes}
+    rows = []
+    for name, b in sorted(banks.items()):
+        if b is None:
+            rows.append({"Bank": name})
+            continue
+        counts = b.get("themes") or {}
+        rows.append({"Bank": name, "Headlines": b.get("headline_count", 0),
+                     **{labels[t]: counts.get(t, 0) for t in themes}})
+    columns = ["Bank", "Headlines", *labels.values()]
+    return pd.DataFrame(rows, columns=columns).set_index("Bank").astype("Int64")
+
+
 def page_reputation(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: ARG001 - uniform page signature, see main()
     st.title("📰 Reputation")
     st.caption(
@@ -545,15 +567,17 @@ def page_reputation(df: pd.DataFrame | None, profiles: dict) -> None:  # noqa: A
         "evidence that a bank is absent from the news."
     )
 
-    themes = sorted({t for b in banks.values() for t in (b.get("themes") or {})})
-    rows = [
-        {"Bank": name, "Headlines": b.get("headline_count", 0),
-         **{t.replace("_", " ").capitalize(): (b.get("themes") or {}).get(t, 0) for t in themes}}
-        for name, b in sorted(banks.items())
-    ]
-    st.dataframe(pd.DataFrame(rows).set_index("Bank"), use_container_width=True)
+    st.dataframe(reputation_table(banks), use_container_width=True)
+    no_snapshot = [name for name, b in sorted(banks.items()) if b is None]
+    if no_snapshot:
+        st.caption(
+            f"No snapshot for {', '.join(no_snapshot)}: nothing could be fetched or "
+            "classified for them, so their row is empty rather than zero."
+        )
 
-    chosen = st.selectbox("Headlines for", sorted(banks))
+    chosen = st.selectbox("Headlines for", [name for name, b in sorted(banks.items()) if b is not None])
+    if chosen is None:
+        return
     for theme, items in (banks[chosen].get("theme_headlines") or {}).items():
         if items:
             st.markdown(f"**{theme.replace('_', ' ').capitalize()}**")
