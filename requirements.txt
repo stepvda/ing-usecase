@@ -14,7 +14,7 @@ pytest==9.0.3
 requests==2.34.2
 beautifulsoup4==4.15.0
 pydantic==2.13.5
-Pillow==12.3.0
+Pillow==13.0.0
 
 # steph 15/09: headless render path (collection/render.py). Five geometry
 # features need a real browser - page_height_px is core, required and not
